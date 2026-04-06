@@ -194,6 +194,15 @@ app.delete('/api/records/:id', (req, res) => {
   res.json({ success: true });
 });
 
+app.put('/api/records/:id', (req, res) => {
+  const { driverId, date, liters, pricePerLiter, odometer } = req.body;
+  const total = liters * pricePerLiter;
+  db.run('UPDATE records SET driverId=?, date=?, liters=?, pricePerLiter=?, total=?, odometer=? WHERE id=?', 
+    [driverId, date, liters, pricePerLiter, total, odometer || 0, req.params.id]);
+  saveDB();
+  res.json({ success: true });
+});
+
 app.get('/api/backup', (req, res) => {
   const users = db.exec('SELECT * FROM users')[0]?.values.map(row => ({
     id: row[0], username: row[1], password: row[2], role: row[3], driverId: row[4]

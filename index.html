@@ -884,15 +884,84 @@
 
             div.innerHTML = filtered.map(r => {
                 const driver = drivers.find(d => d.id === r.driverId);
+                const canEdit = currentUser.role === 'admin' || currentUser.role === 'manager';
                 return `<div class="record-item">
                     <div>
                         <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
                         <div class="record-driver">${driver ? driver.name : 'Unknown'}</div>
                         <div>${r.liters}L @ ${formatCurrency(r.pricePerLiter)}/L</div>
                     </div>
-                    <div class="record-amount">${formatCurrency(r.total)}</div>
+                    <div>
+                        <div class="record-amount">${formatCurrency(r.total)}</div>
+                        ${canEdit ? `<div class="action-row" style="margin-top:0.25rem;justify-content:flex-end;">
+                            <button class="edit-btn" onclick="editRecord(${r.id})">Edit</button>
+                            <button class="delete-btn" onclick="deleteRecord(${r.id})">Delete</button>
+                        </div>` : ''}
+                    </div>
                 </div>`;
             }).join('');
+        }
+
+        function editRecord(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+
+            const driver = drivers.find(d => d.id === record.driverId);
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `<form id="editRecordForm">
+                <div class="form-group">
+                    <label>Driver</label>
+                    <select id="editRecDriver" required>${drivers.map(d => `<option value="${d.id}" ${d.id === record.driverId ? 'selected' : ''}>${d.name}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="editRecDate" value="${record.date}" required>
+                </div>
+                <div class="form-group">
+                    <label>Liters</label>
+                    <input type="number" step="0.01" id="editRecLiters" value="${record.liters}" required>
+                </div>
+                <div class="form-group">
+                    <label>Price per Liter (PHP)</label>
+                    <input type="number" step="0.01" id="editRecPrice" value="${record.pricePerLiter}" required>
+                </div>
+                <div class="form-group">
+                    <label>Odometer (km)</label>
+                    <input type="number" id="editRecOdometer" value="${record.odometer}">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Record</button>
+            </form>`;
+            
+            document.getElementById('editRecordForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const driverId = parseInt(document.getElementById('editRecDriver').value);
+                const date = document.getElementById('editRecDate').value;
+                const liters = parseFloat(document.getElementById('editRecLiters').value);
+                const pricePerLiter = parseFloat(document.getElementById('editRecPrice').value);
+                const odometer = parseFloat(document.getElementById('editRecOdometer').value) || 0;
+                
+                await apiCall('/api/records/' + id, {
+                    method: 'PUT',
+                    body: JSON.stringify({ driverId, date, liters, pricePerLiter, odometer })
+                });
+                
+                records = await apiCall('/api/records');
+                closeModal();
+                renderDashboard();
+                renderRecords();
+            };
+            
+            document.getElementById('modalTitle').textContent = 'Edit Fuel Record';
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        async function deleteRecord(id) {
+            if (confirm('Delete this fuel record?')) {
+                await apiCall('/api/records/' + id, { method: 'DELETE' });
+                records = await apiCall('/api/records');
+                renderDashboard();
+                renderRecords();
+            }
         }
 
         function renderUsers() {
