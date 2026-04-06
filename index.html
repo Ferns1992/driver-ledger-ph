@@ -905,9 +905,71 @@
                     <span class="badge badge-${u.role}">${u.role}</span>
                     ${driver ? `<span style="font-size:0.75rem;color:var(--text-secondary)">→ ${driver.name}</span>` : ''}
                 </div>
-                ${u.username !== 'admin' ? `<button class="delete-btn" onclick="deleteUser('${u.username}')">Delete</button>` : ''}
+                <div class="action-row" style="margin:0;">
+                    <button class="edit-btn" onclick="editUser('${u.username}')">Edit</button>
+                    ${u.username !== 'admin' ? `<button class="delete-btn" onclick="deleteUser('${u.username}')">Delete</button>` : ''}
+                </div>
             </div>`;
             }).join('');
+        }
+
+        function editUser(username) {
+            const user = users.find(u => u.username === username);
+            if (!user) return;
+
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `<form id="editUserForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="editUserUsername" value="${user.username}" disabled style="background:var(--bg);opacity:0.7;">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="editUserPassword" placeholder="Leave empty to keep current">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="editUserRole">
+                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                        <option value="driver" ${user.role === 'driver' ? 'selected' : ''}>Driver</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editDriverGroup" style="display:${user.role === 'driver' ? 'block' : 'none'};">
+                    <label>Assign to Driver</label>
+                    <select id="editUserDriver">
+                        ${drivers.map(d => `<option value="${d.id}" ${user.driverId === d.id ? 'selected' : ''}>${d.name} - ${d.plate}</option>`).join('')}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Update User</button>
+            </form>`;
+            
+            document.getElementById('editUserRole').onchange = function() {
+                document.getElementById('editDriverGroup').style.display = this.value === 'driver' ? 'block' : 'none';
+            };
+            
+            document.getElementById('editUserForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const newPassword = document.getElementById('editUserPassword').value;
+                const role = document.getElementById('editUserRole').value;
+                const driverId = role === 'driver' ? parseInt(document.getElementById('editUserDriver').value) : null;
+                
+                const updates = { role, driverId };
+                if (newPassword) updates.password = newPassword;
+                
+                await apiCall('/api/users/' + username, {
+                    method: 'PUT',
+                    body: JSON.stringify(updates)
+                });
+                
+                users = await apiCall('/api/users');
+                closeModal();
+                renderUsers();
+            };
+            
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('modalOverlay').classList.add('active');
         }
 
         function showAddEntryModal() {

@@ -95,6 +95,35 @@ app.delete('/api/users/:username', (req, res) => {
   res.json({ success: true });
 });
 
+app.put('/api/users/:username', (req, res) => {
+  const { password, role, driverId } = req.body;
+  const username = req.params.username;
+  
+  let updates = [];
+  let values = [];
+  
+  if (password) {
+    updates.push('password = ?');
+    values.push(password);
+  }
+  if (role) {
+    updates.push('role = ?');
+    values.push(role);
+  }
+  if (driverId !== undefined) {
+    updates.push('driverId = ?');
+    values.push(driverId);
+  }
+  
+  if (updates.length > 0) {
+    values.push(username);
+    db.run(`UPDATE users SET ${updates.join(', ')} WHERE username = ?`, values);
+    saveDB();
+  }
+  
+  res.json({ success: true });
+});
+
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const result = db.exec("SELECT * FROM users WHERE username = ? AND password = ?", [username, password]);
