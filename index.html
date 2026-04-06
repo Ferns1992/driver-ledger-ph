@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Driver Ledger PH</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <style>
@@ -527,7 +528,11 @@
                         </select>
                     </div>
                     <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
-                    <button class="btn btn-outline" onclick="exportCSV()" style="margin-top:0.5rem;">Export CSV</button>
+                    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                        <button class="btn btn-outline" onclick="exportCSV()" style="flex:1;">📊 CSV</button>
+                        <button class="btn btn-outline" onclick="exportPDF()" style="flex:1;">📄 PDF</button>
+                        <button class="btn btn-outline" onclick="sharePDF()" style="flex:1;">📱 Share</button>
+                    </div>
                     <div id="reportContent" style="margin-top:1rem;"></div>
                 </div>
 
@@ -1278,6 +1283,118 @@
             a.href = url;
             a.download = `fuel_report_${year}.csv`;
             a.click();
+        }
+
+        function exportPDF() {
+            const year = document.getElementById('reportYear').value;
+            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(30, 58, 95);
+            doc.text('Driver Ledger PH - Fuel Report', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`Year: ${year}`, 14, 30);
+            doc.text(`Generated: ${new Date().toLocaleDateString('en-PH')}`, 14, 36);
+            
+            let y = 50;
+            let totalLiters = 0;
+            let totalCost = 0;
+            
+            doc.setFontSize(14);
+            doc.setTextColor(30, 58, 95);
+            doc.text('Fuel Records', 14, y);
+            y += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            
+            yearRecords.forEach(r => {
+                const driver = drivers.find(d => d.id === r.driverId);
+                totalLiters += r.liters;
+                totalCost += r.total;
+                
+                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ ₱${r.pricePerLiter}/L | ₱${r.total.toFixed(2)}`, 14, y);
+                y += 7;
+                
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+            });
+            
+            y += 5;
+            doc.setDrawColor(200);
+            doc.line(14, y, 196, y);
+            y += 10;
+            
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 95);
+            doc.text(`Total Liters: ${totalLiters.toFixed(1)}L`, 14, y);
+            doc.text(`Total Cost: ₱${totalCost.toFixed(2)}`, 14, y + 7);
+            
+            doc.save(`fuel_report_${year}.pdf`);
+        }
+
+        function sharePDF() {
+            const year = document.getElementById('reportYear').value;
+            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(30, 58, 95);
+            doc.text('Driver Ledger PH - Fuel Report', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`Year: ${year}`, 14, 30);
+            doc.text(`Generated: ${new Date().toLocaleDateString('en-PH')}`, 14, 36);
+            
+            let y = 50;
+            let totalLiters = 0;
+            let totalCost = 0;
+            
+            doc.setFontSize(14);
+            doc.setTextColor(30, 58, 95);
+            doc.text('Fuel Records', 14, y);
+            y += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            
+            yearRecords.forEach(r => {
+                const driver = drivers.find(d => d.id === r.driverId);
+                totalLiters += r.liters;
+                totalCost += r.total;
+                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ ₱${r.pricePerLiter}/L | ₱${r.total.toFixed(2)}`, 14, y);
+                y += 7;
+                if (y > 270) { doc.addPage(); y = 20; }
+            });
+            
+            y += 5;
+            doc.line(14, y, 196, y);
+            y += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 95);
+            doc.text(`Total Liters: ${totalLiters.toFixed(1)}L`, 14, y);
+            doc.text(`Total Cost: ₱${totalCost.toFixed(2)}`, 14, y + 7);
+            
+            const pdfBlob = doc.output('blob');
+            const file = new File([pdfBlob], `fuel_report_${year}.pdf`, { type: 'application/pdf' });
+            
+            if (navigator.share && navigator.canShare({ files: [new File([file], `fuel_report_${year}.pdf`, { type: 'application/pdf' })] })) {
+                navigator.share({
+                    files: [new File([pdfBlob], `fuel_report_${year}.pdf`, { type: 'application/pdf' })]
+                }).catch(() => { doc.save(`fuel_report_${year}.pdf`); });
+            } else {
+                doc.save(`fuel_report_${year}.pdf`);
+            }
         }
 
         async function exportBackup() {
