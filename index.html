@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Driver Ledger PH</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        :root {
+            --primary: #1E3A5F;
+            --secondary: #F59E0B;
+            --accent: #10B981;
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --error: #EF4444;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 24px;
+            --border: #e5e7eb;
+        }
+        
+        [data-theme="dark"] {
+            --primary: #3B82F6;
+            --secondary: #F59E0B;
+            --accent: #10B981;
+            --bg: #111827;
+            --surface: #1F2937;
+            --error: #EF4444;
+            --text: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --border: #374151;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        .app-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-header h1 { font-size: 1.25rem; font-weight: 700; }
+        
+        .app-header .user-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+        
+        .main-content { padding: 1rem; }
+        
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, var(--primary), #2d4a6f);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .stat-item.amber { background: linear-gradient(135deg, var(--secondary), #d97706); }
+        
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.75rem; opacity: 0.9; }
+        
+        .driver-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .driver-card:last-child { border-bottom: none; }
+        
+        .driver-info h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .driver-info p { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .driver-rate {
+            text-align: right;
+        }
+        
+        .driver-rate .rate { 
+            font-weight: 700; 
+            color: var(--accent);
+            font-size: 1.125rem;
+        }
+        
+        .driver-rate .fuel-type {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            background: #eee;
+        }
+        
+        .driver-rate .fuel-type.diesel { background: #fef3c7; color: #92400e; }
+        .driver-rate .fuel-type.petrol { background: #d1fae5; color: #065f46; }
+        
+        .form-group { margin-bottom: 1rem; }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            background: var(--surface);
+            color: var(--text);
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            cursor: pointer;
+            z-index: 99;
+        }
+        
+        .fab:active { transform: scale(0.95); }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(30, 58, 95, 0.1);
+        }
+        
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .record-item:last-child { border-bottom: none; }
+        
+        .record-date { font-size: 0.75rem; color: var(--text-secondary); }
+        .record-driver { font-weight: 500; }
+        .record-amount { font-weight: 700; color: var(--primary); }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 200;
+        }
+        
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: var(--surface);
+            width: 100%;
+            max-width: 480px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 1.5rem;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-header h2 { font-size: 1.25rem; }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary), #2d4a6f);
+        }
+        
+        .login-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .login-card h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .login-card .btn { margin-top: 1rem; }
+        
+        .toggle-link {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .toggle-link button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-admin { background: #dbeafe; color: #1e40af; }
+        .badge-manager { background: #d1fae5; color: #065f46; }
+        .badge-viewer { background: #f3f4f6; color: #6b7280; }
+        .badge-driver { background: #fef3c7; color: #92400e; }
+        
+        .report-driver {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .report-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius);
+            margin-top: 1rem;
+        }
+        
+        .action-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-row button {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        .action-row .edit-btn { background: #e5e7eb; color: var(--text); }
+        .action-row .delete-btn { background: #fee2e2; color: var(--error); }
+
+        .filter-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-row select {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <h1>🚛 Driver Ledger PH</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="toggle-link">
+                    <button type="button" onclick="showRegister()">Create Account</button>
+                </div>
+            </form>
+            <form id="registerForm" style="display:none;">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="regRole">
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="driver">Driver</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+                <div class="toggle-link">
+                    <button type="button" onclick="showLogin()">Back to Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="app" style="display:none;">
+        <header class="app-header">
+            <h1>🚛 Driver Ledger</h1>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button class="user-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">🌙</button>
+                <button class="user-btn" onclick="showUserModal()" id="userDisplay">User</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div id="page-dashboard" class="page active">
+                <div class="card">
+                    <div class="card-title">📊 Monthly Overview</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalLiters">0</div>
+                            <div class="stat-label">Liters</div>
+                        </div>
+                        <div class="stat-item amber">
+                            <div class="stat-value" id="totalCost">₱0</div>
+                            <div class="stat-label">Total Cost</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="avgConsumption">0</div>
+                            <div class="stat-label">km/L Avg</div>
+                        </div>
+                        <div class="stat-item amber">
+                            <div class="stat-value" id="totalRecords">0</div>
+                            <div class="stat-label">Entries</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">⛽ Recent Entries</div>
+                    <div id="recentEntries"></div>
+                </div>
+            </div>
+
+            <div id="page-drivers" class="page">
+                <div class="card">
+                    <div class="card-title">🚚 Drivers</div>
+                    <div id="driversList"></div>
+                    <button class="btn btn-primary" onclick="showDriverModal()" style="margin-top:1rem;">+ Add Driver</button>
+                </div>
+            </div>
+
+            <div id="page-records" class="page">
+                <div class="card">
+                    <div class="card-title">📝 Fuel Records</div>
+                    <div class="filter-row">
+                        <select id="yearFilter" onchange="renderRecords()">
+                            <option value="all">All Years</option>
+                        </select>
+                        <select id="driverFilter" onchange="renderRecords()">
+                            <option value="all">All Drivers</option>
+                        </select>
+                    </div>
+                    <div id="recordsList"></div>
+                </div>
+            </div>
+
+            <div id="page-settings" class="page">
+                <div class="card">
+                    <div class="card-title">⚙️ User Management</div>
+                    <div id="usersList"></div>
+                    <button class="btn btn-outline" onclick="showAddUserModal()" style="margin-top:1rem;">+ Add User</button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">📄 Year-End Report</div>
+                    <div class="filter-row">
+                        <select id="reportYear">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                    <button class="btn btn-outline" onclick="exportCSV()" style="margin-top:0.5rem;">Export CSV</button>
+                    <div id="reportContent" style="margin-top:1rem;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">💾 Backup & Restore</div>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;">Export your data for safekeeping or import a previous backup.</p>
+                    <button class="btn btn-primary" onclick="exportBackup()">📥 Download Backup</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('restoreFile').click()" style="margin-top:0.5rem;">📤 Restore Backup</button>
+                    <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="importBackup(this)">
+                </div>
+            </div>
+        </main>
+
+        <button class="fab" onclick="showAddEntryModal()">+</button>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-page="dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </button>
+            <button class="nav-item" data-page="drivers">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Drivers
+            </button>
+            <button class="nav-item" data-page="records">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Records
+            </button>
+            <button class="nav-item" data-page="settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </button>
+        </nav>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Entry</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:4090';
+        let currentUser = null;
+        let drivers = [];
+        let records = [];
+        let users = [];
+
+        async function apiCall(endpoint, options = {}) {
+            const res = await fetch(API + endpoint, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...options.headers }
+            });
+            return res.json();
+        }
+
+        async function init() {
+            const savedTheme = localStorage.getItem('dl_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('themeBtn').textContent = '☀️';
+            }
+            
+            const savedUser = localStorage.getItem('dl_currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                await loadData();
+                showApp();
+            }
+            setupNav();
+            populateYearFilter();
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('dl_theme', 'light');
+                document.getElementById('themeBtn').textContent = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('dl_theme', 'dark');
+                document.getElementById('themeBtn').textContent = '☀️';
+            }
+        }
+
+        async function loadData() {
+            users = await apiCall('/api/users');
+            drivers = await apiCall('/api/drivers');
+            records = await apiCall('/api/records');
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        document.getElementById('loginForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const result = await apiCall('/api/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            if (result.success) {
+                currentUser = result.user;
+                localStorage.setItem('dl_currentUser', JSON.stringify(result.user));
+                await loadData();
+                showApp();
+            } else {
+                alert(result.error || 'Invalid credentials');
+            }
+        };
+
+        document.getElementById('registerForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            
+            const result = await apiCall('/api/users', {
+                method: 'POST',
+                body: JSON.stringify({ username, password, role })
+            });
+            
+            if (result.success) {
+                alert('Account created! Please login.');
+                showLogin();
+            } else {
+                alert(result.error || 'Username already exists');
+            }
+        };
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('userDisplay').textContent = currentUser.username;
+            
+            if (currentUser.role === 'driver') {
+                showDriverView();
+            } else {
+                renderDashboard();
+                renderDrivers();
+                renderRecords();
+                renderUsers();
+            }
+        }
+
+        function showDriverView() {
+            const myDriver = drivers.find(d => d.id === currentUser.driverId);
+            document.getElementById('page-dashboard').innerHTML = `
+                <div class="card">
+                    <div class="card-title">🚚 My Profile</div>
+                    <div style="padding:1rem;">
+                        <h3>${myDriver?.name || 'Driver'}</h3>
+                        <p>${myDriver?.vehicle} (${myDriver?.plate})</p>
+                        <p>Fuel Type: <span class="fuel-type ${myDriver?.fuelType}">${myDriver?.fuelType}</span></p>
+                        <p>Consumption: ${myDriver?.consumptionRate} km/L</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 My Fuel Records</div>
+                    <div id="driverRecords"></div>
+                </div>
+            `;
+            
+            const myRecords = records.filter(r => r.driverId === currentUser.driverId);
+            
+            document.getElementById('driverRecords').innerHTML = myRecords.length === 0 
+                ? '<div class="empty-state">No fuel records yet</div>'
+                : myRecords.map(r => `<div class="record-item">
+                    <div>
+                        <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
+                        <div>${r.liters}L @ ₱${r.pricePerLiter}/L</div>
+                        <div class="record-date">Odometer: ${r.odometer} km</div>
+                    </div>
+                    <div class="record-amount">₱${r.total.toFixed(2)}</div>
+                </div>`).join('');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.style.display = 'none');
+            document.querySelector('.fab').style.display = 'none';
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('dl_currentUser');
+            location.reload();
+        }
+
+        function setupNav() {
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+                };
+            });
+        }
+
+        function populateYearFilter() {
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('yearFilter');
+            const reportYear = document.getElementById('reportYear');
+            
+            for (let y = currentYear; y >= 2020; y--) {
+                const opt1 = document.createElement('option');
+                opt1.value = y;
+                opt1.textContent = y;
+                yearSelect.appendChild(opt1);
+                
+                const opt2 = document.createElement('option');
+                opt2.value = y;
+                opt2.textContent = y;
+                reportYear.appendChild(opt2);
+            }
+        }
+
+        function formatCurrency(amount) {
+            return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderDashboard() {
+            const now = new Date();
+            const thisMonth = records.filter(r => {
+                const d = new Date(r.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+
+            const totalLiters = thisMonth.reduce((sum, r) => sum + r.liters, 0);
+            const totalCost = thisMonth.reduce((sum, r) => sum + r.total, 0);
+            
+            document.getElementById('totalLiters').textContent = totalLiters.toFixed(1);
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+            document.getElementById('totalRecords').textContent = thisMonth.length;
+
+            let totalKm = 0;
+            thisMonth.forEach(r => {
+                const driver = drivers.find(d => d.id === r.driverId);
+                if (driver && driver.consumptionRate > 0) {
+                    totalKm += r.liters * driver.consumptionRate;
+                }
+            });
+            const avgCons = totalLiters > 0 ? (totalKm / totalLiters).toFixed(1) : '0';
+            document.getElementById('avgConsumption').textContent = avgCons;
+
+            const recentDiv = document.getElementById('recentEntries');
+            if (thisMonth.length === 0) {
+                recentDiv.innerHTML = '<div class="empty-state">No entries this month</div>';
+            } else {
+                recentDiv.innerHTML = thisMonth.slice(0, 5).map(r => {
+                    const driver = drivers.find(d => d.id === r.driverId);
+                    return `<div class="record-item">
+                        <div>
+                            <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
+                            <div class="record-driver">${driver ? driver.name : 'Unknown'}</div>
+                        </div>
+                        <div class="record-amount">${r.liters}L - ${formatCurrency(r.total)}</div>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function renderDrivers() {
+            const div = document.getElementById('driversList');
+            if (drivers.length === 0) {
+                div.innerHTML = '<div class="empty-state">No drivers yet. Add one!</div>';
+                return;
+            }
+            
+            div.innerHTML = drivers.map(d => {
+                return `<div class="driver-card">
+                    <div class="driver-info">
+                        <h3>${d.name}</h3>
+                        <p>${d.vehicle} (${d.plate})</p>
+                    </div>
+                    <div class="driver-rate">
+                        <div class="rate">${d.consumptionRate} km/L</div>
+                        <div style="font-size:0.75rem;color:var(--text-secondary)">₱${d.defaultPrice || 60}/L</div>
+                        <span class="fuel-type ${d.fuelType}">${d.fuelType}</span>
+                    </div>
+                </div>
+                <div class="action-row">
+                    <button class="edit-btn" onclick="editDriver(${d.id})">Edit</button>
+                    <button class="delete-btn" onclick="deleteDriver(${d.id})">Delete</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderRecords() {
+            const yearFilter = document.getElementById('yearFilter').value;
+            const driverFilter = document.getElementById('driverFilter').value;
+            
+            let filtered = records;
+            if (yearFilter !== 'all') {
+                filtered = filtered.filter(r => new Date(r.date).getFullYear() == yearFilter);
+            }
+            if (driverFilter !== 'all') {
+                filtered = filtered.filter(r => r.driverId == driverFilter);
+            }
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const driverSelect = document.getElementById('driverFilter');
+            driverSelect.innerHTML = '<option value="all">All Drivers</option>';
+            drivers.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                driverSelect.appendChild(opt);
+            });
+            if (driverFilter !== 'all') driverSelect.value = driverFilter;
+
+            const div = document.getElementById('recordsList');
+            if (filtered.length === 0) {
+                div.innerHTML = '<div class="empty-state">No records found</div>';
+                return;
+            }
+
+            div.innerHTML = filtered.map(r => {
+                const driver = drivers.find(d => d.id === r.driverId);
+                return `<div class="record-item">
+                    <div>
+                        <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
+                        <div class="record-driver">${driver ? driver.name : 'Unknown'}</div>
+                        <div>${r.liters}L @ ${formatCurrency(r.pricePerLiter)}/L</div>
+                    </div>
+                    <div class="record-amount">${formatCurrency(r.total)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderUsers() {
+            const div = document.getElementById('usersList');
+            div.innerHTML = users.map(u => {
+                const driver = drivers.find(d => d.id === u.driverId);
+                return `<div class="user-list-item">
+                <div>
+                    <strong>${u.username}</strong>
+                    <span class="badge badge-${u.role}">${u.role}</span>
+                    ${driver ? `<span style="font-size:0.75rem;color:var(--text-secondary)">→ ${driver.name}</span>` : ''}
+                </div>
+                ${u.username !== 'admin' ? `<button class="delete-btn" onclick="deleteUser('${u.username}')">Delete</button>` : ''}
+            </div>`;
+            }).join('');
+        }
+
+        function showAddEntryModal() {
+            const availableDrivers = drivers;
+                
+            if (availableDrivers.length === 0) {
+                alert('Please add a driver first!');
+                return;
+            }
+
+            const selectedDriverId = availableDrivers[0].id;
+            const defaultPrice = availableDrivers[0].defaultPrice || 60;
+                
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `<form id="entryForm">
+                <div class="form-group">
+                    <label>Driver</label>
+                    <select id="entryDriver" required onchange="updateDefaultPrice()">${availableDrivers.map(d => `<option value="${d.id}" data-price="${d.defaultPrice || 60}">${d.name}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="entryDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Liters</label>
+                    <input type="number" step="0.01" id="entryLiters" required>
+                </div>
+                <div class="form-group">
+                    <label>Price per Liter (PHP)</label>
+                    <input type="number" step="0.01" id="entryPrice" value="${defaultPrice}">
+                    <small style="color:var(--text-secondary)">Auto-filled from driver settings. Edit when price changes.</small>
+                </div>
+                <div class="form-group">
+                    <label>Odometer (km)</label>
+                    <input type="number" id="entryOdometer">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Entry</button>
+            </form>`;
+            
+            document.getElementById('entryDate').valueAsDate = new Date();
+            
+            window.updateDefaultPrice = function() {
+                const select = document.getElementById('entryDriver');
+                const price = select.options[select.selectedIndex].dataset.price;
+                document.getElementById('entryPrice').value = price;
+            };
+            
+            document.getElementById('entryForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const driverId = parseInt(document.getElementById('entryDriver').value);
+                const date = document.getElementById('entryDate').value;
+                const liters = parseFloat(document.getElementById('entryLiters').value);
+                const pricePerLiter = parseFloat(document.getElementById('entryPrice').value);
+                const odometer = parseFloat(document.getElementById('entryOdometer').value) || 0;
+                
+                await apiCall('/api/records', {
+                    method: 'POST',
+                    body: JSON.stringify({ driverId, date, liters, pricePerLiter, odometer })
+                });
+                
+                records = await apiCall('/api/records');
+                closeModal();
+                if (currentUser.role === 'driver') {
+                    showDriverView();
+                } else {
+                    renderDashboard();
+                    renderRecords();
+                }
+            };
+            
+            document.getElementById('modalTitle').textContent = 'Add Fuel Entry';
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function showDriverModal(driver = null) {
+            const content = document.getElementById('modalContent');
+            const isEdit = driver !== null;
+            
+            content.innerHTML = `<form id="driverForm">
+                <div class="form-group">
+                    <label>Driver Name</label>
+                    <input type="text" id="driverName" required value="${driver ? driver.name : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Model</label>
+                    <input type="text" id="driverVehicle" required value="${driver ? driver.vehicle : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Plate Number</label>
+                    <input type="text" id="driverPlate" required value="${driver ? driver.plate : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Fuel Type</label>
+                    <select id="driverFuelType">
+                        <option value="petrol" ${driver && driver.fuelType === 'petrol' ? 'selected' : ''}>Petrol</option>
+                        <option value="diesel" ${driver && driver.fuelType === 'diesel' ? 'selected' : ''}>Diesel</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Consumption Rate (km/L)</label>
+                    <input type="number" step="0.1" id="driverConsumption" required value="${driver ? driver.consumptionRate : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Default Fuel Price (PHP/Liter)</label>
+                    <input type="number" step="0.01" id="driverDefaultPrice" required value="${driver ? driver.defaultPrice : '60.00'}">
+                    <small style="color:var(--text-secondary)">Update this when fuel price changes daily</small>
+                </div>
+                <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Add'} Driver</button>
+            </form>`;
+            
+            document.getElementById('driverForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('driverName').value;
+                const vehicle = document.getElementById('driverVehicle').value;
+                const plate = document.getElementById('driverPlate').value;
+                const fuelType = document.getElementById('driverFuelType').value;
+                const consumptionRate = parseFloat(document.getElementById('driverConsumption').value);
+                const defaultPrice = parseFloat(document.getElementById('driverDefaultPrice').value);
+                
+                if (isEdit) {
+                    await apiCall('/api/drivers/' + driver.id, {
+                        method: 'PUT',
+                        body: JSON.stringify({ name, vehicle, plate, fuelType, consumptionRate, defaultPrice })
+                    });
+                } else {
+                    await apiCall('/api/drivers', {
+                        method: 'POST',
+                        body: JSON.stringify({ name, vehicle, plate, fuelType, consumptionRate, defaultPrice })
+                    });
+                }
+                
+                drivers = await apiCall('/api/drivers');
+                closeModal();
+                renderDrivers();
+                renderRecords();
+            };
+            
+            document.getElementById('modalTitle').textContent = isEdit ? 'Edit Driver' : 'Add Driver';
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function editDriver(id) {
+            const driver = drivers.find(d => d.id === id);
+            showDriverModal(driver);
+        }
+
+        async function deleteDriver(id) {
+            if (confirm('Delete this driver?')) {
+                await apiCall('/api/drivers/' + id, { method: 'DELETE' });
+                drivers = await apiCall('/api/drivers');
+                renderDrivers();
+            }
+        }
+
+        function showAddUserModal() {
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `<form id="newUserForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="newUserUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="newUserPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="newUserRole" onchange="toggleDriverSelect()">
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="driver">Driver</option>
+                    </select>
+                </div>
+                <div class="form-group" id="driverSelectGroup" style="display:none;">
+                    <label>Assign to Driver</label>
+                    <select id="newUserDriver">
+                        ${drivers.map(d => `<option value="${d.id}">${d.name} - ${d.plate}</option>`).join('')}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create User</button>
+            </form>`;
+            
+            document.getElementById('newUserForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('newUserUsername').value;
+                const password = document.getElementById('newUserPassword').value;
+                const role = document.getElementById('newUserRole').value;
+                const driverId = role === 'driver' ? parseInt(document.getElementById('newUserDriver').value) : null;
+                
+                const result = await apiCall('/api/users', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password, role, driverId })
+                });
+                
+                if (result.success) {
+                    users = await apiCall('/api/users');
+                    closeModal();
+                    renderUsers();
+                } else {
+                    alert(result.error || 'Username already exists');
+                }
+            };
+            
+            document.getElementById('modalTitle').textContent = 'Add User';
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function toggleDriverSelect() {
+            const role = document.getElementById('newUserRole').value;
+            document.getElementById('driverSelectGroup').style.display = role === 'driver' ? 'block' : 'none';
+        }
+
+        async function deleteUser(username) {
+            if (confirm('Delete user ' + username + '?')) {
+                await apiCall('/api/users/' + username, { method: 'DELETE' });
+                users = await apiCall('/api/users');
+                renderUsers();
+            }
+        }
+
+        function showUserModal() {
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `<div style="text-align:center;">
+                <p>Logged in as: <strong>${currentUser.username}</strong></p>
+                <p>Role: <span class="badge badge-${currentUser.role}">${currentUser.role}</span></p>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>`;
+            
+            document.getElementById('modalTitle').textContent = 'User Info';
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function generateReport() {
+            const year = document.getElementById('reportYear').value;
+            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
+            
+            let html = '';
+            let grandTotalLiters = 0;
+            let grandTotalCost = 0;
+            
+            drivers.forEach(driver => {
+                const driverRecords = yearRecords.filter(r => r.driverId === driver.id);
+                if (driverRecords.length === 0) return;
+                
+                const totalLiters = driverRecords.reduce((sum, r) => sum + r.liters, 0);
+                const totalCost = driverRecords.reduce((sum, r) => sum + r.total, 0);
+                
+                grandTotalLiters += totalLiters;
+                grandTotalCost += totalCost;
+                
+                html += `<div class="report-driver">
+                    <h3>${driver.name}</h3>
+                    <p>${driver.vehicle} (${driver.plate})</p>
+                    <p><strong>${totalLiters.toFixed(1)}L</strong> @ ${formatCurrency(totalCost)}</p>
+                </div>`;
+            });
+            
+            if (grandTotalLiters === 0) {
+                html = '<div class="empty-state">No records for this year</div>';
+            } else {
+                html += `<div class="report-total">
+                    <span>Grand Total (${year})</span>
+                    <span>${grandTotalLiters.toFixed(1)}L - ${formatCurrency(grandTotalCost)}</span>
+                </div>`;
+            }
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        function exportCSV() {
+            const year = document.getElementById('reportYear').value;
+            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
+            
+            let csv = 'Date,Driver,Vehicle,Liters,Price/L,Total,Odometer\n';
+            
+            yearRecords.forEach(r => {
+                const driver = drivers.find(d => d.id === r.driverId);
+                csv += `${r.date},"${driver ? driver.name : ''}","${driver ? driver.vehicle : ''}",${r.liters},${r.pricePerLiter},${r.total},${r.odometer}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fuel_report_${year}.csv`;
+            a.click();
+        }
+
+        async function exportBackup() {
+            window.open(API + '/api/backup', '_blank');
+        }
+
+        async function importBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (!confirm('This will replace all current data. Continue?')) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    await apiCall('/api/restore', {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    await loadData();
+                    renderDashboard();
+                    renderDrivers();
+                    renderRecords();
+                    renderUsers();
+                    alert('Backup restored successfully!');
+                } catch (err) {
+                    alert('Invalid backup file');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        document.getElementById('modalOverlay').onclick = function(e) {
+            if (e.target === this) closeModal();
+        };
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  driver-ledger:
+    build: .
+    ports:
+      - "4090:3000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
