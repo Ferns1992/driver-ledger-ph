@@ -434,16 +434,16 @@
     <div id="loginScreen" class="login-screen">
         <div class="login-card">
             <h1>🚛 Driver Ledger PH</h1>
-            <form id="loginForm">
+            <form id="loginForm" onsubmit="return false;">
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" id="loginUsername" required>
+                    <input type="text" id="loginUsername" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="loginPassword" required>
+                    <input type="password" id="loginPassword" required autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="button" class="btn btn-primary" onclick="handleLogin()">Login</button>
             </form>
         </div>
     </div>
@@ -628,10 +628,13 @@
             document.getElementById('loginForm').style.display = 'block';
         }
 
-        document.getElementById('loginForm').onsubmit = async function(e) {
-            e.preventDefault();
+        async function handleLogin() {
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
             const result = await apiCall('/api/login', {
                 method: 'POST',
                 body: JSON.stringify({ username, password })
@@ -644,7 +647,7 @@
             } else {
                 alert(result.error || 'Invalid credentials');
             }
-        };
+        }
 
         function showApp() {
             document.getElementById('loginScreen').style.display = 'none';
