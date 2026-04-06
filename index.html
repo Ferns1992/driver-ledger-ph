@@ -602,19 +602,10 @@
             setupNav();
             populateYearFilter();
             
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
-        }
-            
-            const savedUser = localStorage.getItem('dl_currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                await loadData();
-                showApp();
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', handleLogin);
             }
-            setupNav();
-            populateYearFilter();
-            
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
         }
 
         function toggleTheme() {
