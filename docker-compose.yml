@@ -4,7 +4,10 @@ services:
   driver-ledger:
     build: .
     ports:
-      - "4090:3000"
+      - "4090:4090"
     volumes:
-      - ./data:/data
+      - driverledger_data:/data
     restart: unless-stopped
+
+volumes:
+  driverledger_data:

@@ -7,7 +7,9 @@ RUN npm install
 
 COPY index.html manifest.json server.js ./
 
-RUN mkdir -p /data
+RUN mkdir -p /data && chmod 777 /data
+
+ENV DB_PATH=/data/driverledger.db
 
 EXPOSE 4090
 

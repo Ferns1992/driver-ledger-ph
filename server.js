@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const DB_PATH = path.join(__dirname, 'data', 'driverledger.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'driverledger.db');
 
 app.use(cors());
 app.use(express.json());
@@ -67,6 +67,10 @@ async function initDB() {
 function saveDB() {
   const data = db.export();
   const buffer = Buffer.from(data);
+  const dir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   fs.writeFileSync(DB_PATH, buffer);
 }
 
