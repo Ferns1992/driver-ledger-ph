@@ -444,32 +444,6 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
-                <div class="toggle-link">
-                    <button type="button" onclick="showRegister()">Create Account</button>
-                </div>
-            </form>
-            <form id="registerForm" style="display:none;">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="regUsername" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="regPassword" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select id="regRole">
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
-                        <option value="driver">Driver</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Account</button>
-                <div class="toggle-link">
-                    <button type="button" onclick="showLogin()">Back to Login</button>
-                </div>
             </form>
         </div>
     </div>
@@ -652,12 +626,6 @@
 
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-        }
-
-        function showRegister() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
         }
 
         document.getElementById('loginForm').onsubmit = async function(e) {
@@ -675,25 +643,6 @@
                 showApp();
             } else {
                 alert(result.error || 'Invalid credentials');
-            }
-        };
-
-        document.getElementById('registerForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
-            const role = document.getElementById('regRole').value;
-            
-            const result = await apiCall('/api/users', {
-                method: 'POST',
-                body: JSON.stringify({ username, password, role })
-            });
-            
-            if (result.success) {
-                alert('Account created! Please login.');
-                showLogin();
-            } else {
-                alert(result.error || 'Username already exists');
             }
         };
 
