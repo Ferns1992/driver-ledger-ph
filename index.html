@@ -27,20 +27,9 @@
             --border: #e5e7eb;
         }
         
-        [data-theme="dark"] {
-            --primary: #3B82F6;
-            --secondary: #F59E0B;
-            --accent: #10B981;
-            --bg: #111827;
-            --surface: #1F2937;
-            --error: #EF4444;
-            --text: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --shadow: 0 2px 8px rgba(0,0,0,0.3);
-            --border: #374151;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        input, select, textarea { -webkit-user-select: text; user-select: text; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -48,6 +37,8 @@
             color: var(--text);
             min-height: 100vh;
             padding-bottom: 80px;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
         
         .app-header {
@@ -337,6 +328,8 @@
             width: 100%;
             max-width: 360px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 10;
         }
         
         .login-card h1 {
@@ -345,7 +338,7 @@
             margin-bottom: 1.5rem;
         }
         
-        .login-card .btn { margin-top: 1rem; }
+        .login-card .btn { margin-top: 1rem; position: relative; z-index: 20; }
         
         .toggle-link {
             text-align: center;
