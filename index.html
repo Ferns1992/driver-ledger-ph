@@ -1371,7 +1371,7 @@
                 totalLiters += r.liters;
                 totalCost += r.total;
                 
-                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ ₱${r.pricePerLiter}/L | ₱${r.total.toFixed(2)}`, 14, y);
+                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ PHP${r.pricePerLiter}/L | PHP${r.total.toFixed(2)}`, 14, y);
                 y += 7;
                 
                 if (y > 270) {
@@ -1425,7 +1425,7 @@
                 const driver = drivers.find(d => d.id === r.driverId);
                 totalLiters += r.liters;
                 totalCost += r.total;
-                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ ₱${r.pricePerLiter}/L | ₱${r.total.toFixed(2)}`, 14, y);
+                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ PHP${r.pricePerLiter}/L | PHP${r.total.toFixed(2)}`, 14, y);
                 y += 7;
                 if (y > 270) { doc.addPage(); y = 20; }
             });
@@ -1436,7 +1436,7 @@
             doc.setFontSize(12);
             doc.setTextColor(30, 58, 95);
             doc.text(`Total Liters: ${totalLiters.toFixed(1)}L`, 14, y);
-            doc.text(`Total Cost: ₱${totalCost.toFixed(2)}`, 14, y + 7);
+            doc.text(`Total Cost: PHP${totalCost.toFixed(2)}`, 14, y + 7);
             
             const pdfBlob = doc.output('blob');
             const file = new File([pdfBlob], `fuel_report_${year}.pdf`, { type: 'application/pdf' });
