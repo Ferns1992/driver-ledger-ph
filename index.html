@@ -437,7 +437,7 @@
                     <label>Password</label>
                     <input type="password" id="loginPassword" required autocomplete="current-password">
                 </div>
-                <button type="button" class="btn btn-primary" onclick="handleLogin()">Login</button>
+                <button type="button" class="btn btn-primary" id="loginBtn" style="margin-top:1rem;">Login</button>
             </form>
         </div>
     </div>
@@ -446,7 +446,7 @@
         <header class="app-header">
             <h1>🚛 Driver Ledger</h1>
             <div style="display:flex;gap:0.5rem;align-items:center;">
-                <button class="user-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">🌙</button>
+                <button type="button" class="user-btn" id="themeBtn" title="Toggle Theme" style="min-width:40px;" onclick="toggleTheme()">🌙</button>
                 <button class="user-btn" onclick="showUserModal()" id="userDisplay">User</button>
             </div>
         </header>
@@ -590,7 +590,7 @@
             const savedTheme = localStorage.getItem('dl_theme');
             if (savedTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
-                document.getElementById('themeBtn').textContent = '☀️';
+                document.getElementById('themeBtn').innerHTML = '☀️';
             }
             
             const savedUser = localStorage.getItem('dl_currentUser');
@@ -601,18 +601,33 @@
             }
             setupNav();
             populateYearFilter();
+            
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+        }
+            
+            const savedUser = localStorage.getItem('dl_currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                await loadData();
+                showApp();
+            }
+            setupNav();
+            populateYearFilter();
+            
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
         }
 
         function toggleTheme() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
             if (isDark) {
-                document.documentElement.setAttribute('data-theme', 'light');
+                html.setAttribute('data-theme', 'light');
                 localStorage.setItem('dl_theme', 'light');
-                document.getElementById('themeBtn').textContent = '🌙';
+                document.getElementById('themeBtn').innerHTML = '🌙';
             } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
+                html.setAttribute('data-theme', 'dark');
                 localStorage.setItem('dl_theme', 'dark');
-                document.getElementById('themeBtn').textContent = '☀️';
+                document.getElementById('themeBtn').innerHTML = '☀️';
             }
         }
 
@@ -798,9 +813,50 @@
                 </div>
                 <div class="action-row">
                     <button class="edit-btn" onclick="editDriver(${d.id})">Edit</button>
+                    <button class="edit-btn" onclick="showDriverReport(${d.id})">Report</button>
                     <button class="delete-btn" onclick="deleteDriver(${d.id})">Delete</button>
                 </div>`;
             }).join('');
+        }
+
+        function showDriverReport(driverId) {
+            const driver = drivers.find(d => d.id === driverId);
+            const year = document.getElementById('reportYear').value;
+            const yearRecords = records.filter(r => r.driverId === driverId && new Date(r.date).getFullYear() == year);
+            
+            const totalLiters = yearRecords.reduce((sum, r) => sum + r.liters, 0);
+            const totalCost = yearRecords.reduce((sum, r) => sum + r.total, 0);
+            
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <div style="text-align:center;">
+                    <h3>${driver.name}</h3>
+                    <p>${driver.vehicle} (${driver.plate})</p>
+                    <hr style="margin:1rem 0;border-color:var(--border);">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="stat-item">
+                            <div class="stat-value">${totalLiters.toFixed(1)}L</div>
+                            <div class="stat-label">Total Fuel</div>
+                        </div>
+                        <div class="stat-item amber">
+                            <div class="stat-value">₱${totalCost.toFixed(2)}</div>
+                            <div class="stat-label">Total Cost</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:1rem;text-align:left;">
+                        <h4 style="margin-bottom:0.5rem;">${year} Records:</h4>
+                        ${yearRecords.length === 0 ? '<p>No records</p>' : yearRecords.map(r => `
+                            <div style="padding:0.5rem;border-bottom:1px solid var(--border);">
+                                <div style="font-size:0.875rem;">${new Date(r.date).toLocaleDateString('en-PH')}</div>
+                                <div>${r.liters}L @ ₱${r.pricePerLiter}/L = ₱${r.total.toFixed(2)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalTitle').textContent = driver.name + ' Report';
+            document.getElementById('modalOverlay').classList.add('active');
         }
 
         function renderRecords() {
