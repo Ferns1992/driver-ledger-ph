@@ -164,3 +164,27 @@ The app is genuinely responsive rather than a stretched phone layout:
 ## 📄 Licence
 
 MIT
+
+## 🛡️ Deployment and backup files
+
+`deploy/` holds the exact files installed on the production host, so the setup is reproducible
+rather than living only in shell history on a server.
+
+| File | Install to | Purpose |
+| --- | --- | --- |
+| `driver-ledger-backup.sh` | `/usr/local/bin/` | Nightly verified snapshot + R2 mirror |
+| `driver-ledger-backup.service` | `/etc/systemd/system/` | One-shot unit for the snapshot |
+| `driver-ledger-backup.timer` | `/etc/systemd/system/` | Schedules it at 03:47 |
+
+```bash
+sudo install -m 700 deploy/driver-ledger-backup.sh        /usr/local/bin/
+sudo install -m 644 deploy/driver-ledger-backup.service   /etc/systemd/system/
+sudo install -m 644 deploy/driver-ledger-backup.timer     /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now driver-ledger-backup.timer
+```
+
+> ⚠️ The snapshot script **refuses to write a backup it has not read back**. It copies the database
+> before touching it, re-runs `PRAGMA integrity_check`, and compares row counts before and after the
+> vacuum. This is not decoration: an earlier version called `sqlite3.connect()` on a path that did
+> not exist yet, which silently created an empty database and replaced the real one — it shipped
+> three valid-looking but completely empty backups offsite before the gap was noticed.
