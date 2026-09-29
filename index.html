@@ -30,6 +30,12 @@
   --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* The UA rule for [hidden] is display:none, but any author `display` declaration
+   outranks it. Several elements below set display explicitly (.shell is flex,
+   .login-wrap is grid) and are also toggled via the hidden attribute, so this
+   rule is what actually makes `hidden` work. Without it the app renders
+   underneath the login screen and signing in appears to do nothing. */
+[hidden]{display:none!important}
 html,body{height:100%}
 body{
   font-family:var(--font); background:var(--bg); color:var(--text);
@@ -248,7 +254,6 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .login-card h1{text-align:center;margin-bottom:1.5rem;display:grid;gap:.6rem;justify-items:center}
 .login-card h1 .brand-mark{width:52px;height:52px;font-size:1.5rem}
 .login-card h1 small{font-size:.75rem;color:var(--text-2);font-weight:500}
-.demo-note{margin-top:1rem;padding:.65rem .8rem;background:var(--surface-2);border:1px dashed var(--border);border-radius:var(--r-sm);font-size:.78rem;color:var(--text-2);text-align:center}
 @media (min-width:900px){.form-2.tight{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -270,7 +275,6 @@ input[type=number]{font-variant-numeric:tabular-nums}
       <input id="lgPass" type="password" autocomplete="current-password" required>
     </div>
     <button class="btn btn-primary" style="width:100%" type="submit">Sign in</button>
-    <div class="demo-note" id="demoNote" hidden>Demo accounts: <b>admin</b> / <b>admin123</b></div>
   </form>
 </div>
 
@@ -1193,10 +1197,6 @@ document.addEventListener('click', (e) => {
     } catch (e) { /* fall through to login */ }
   }
   showLogin();
-  try {
-    const h = await fetch('/api/health').then((r) => r.json());
-    if (h.counts && h.counts.users > 0) $('#demoNote').hidden = false;
-  } catch { /* offline is fine, login still works */ }
 })();
 </script>
 </body>
