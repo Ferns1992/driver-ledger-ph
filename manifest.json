@@ -1,24 +1,22 @@
 {
-  "name": "Driver Ledger PH",
+  "name": "Driver Ledger PH — Fuel Consumption Tracker",
   "short_name": "DriverLedger",
-  "description": "Fuel consumption tracker for Philippines fleet managers",
+  "description": "Track fuel consumption, cost per kilometre and driver performance for Philippine fleets.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
+  "background_color": "#F1F5F9",
   "theme_color": "#1E3A5F",
-  "orientation": "portrait",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en-PH",
+  "dir": "ltr",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Add fuel entry", "short_name": "Add entry", "url": "/?action=add" }
   ]
 }

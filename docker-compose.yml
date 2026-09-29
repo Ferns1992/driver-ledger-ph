@@ -1,13 +1,30 @@
-version: '3.8'
-
 services:
   driver-ledger:
     build: .
-    ports:
-      - "4090:4090"
-    volumes:
-      - driverledger_data:/data
+    image: driver-ledger-ph:latest
+    container_name: driver-ledger
     restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_PATH: /data/driverledger.db
+      PORT: "4090"
+    volumes:
+      # Named volume, not a bind mount: this is what makes the database permanent.
+      # It survives `docker compose down`, image rebuilds, and host reboots.
+      - driver-ledger_data:/data
+    ports:
+      # Bound to loopback only, so the app is never directly reachable from the
+      # internet. On the VPS it is served through the cloudflared tunnel instead.
+      - "127.0.0.1:4090:4090"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4090/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
 volumes:
-  driverledger_data:
+  driver-ledger_data:
+    name: driver-ledger_data

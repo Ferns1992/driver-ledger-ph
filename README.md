@@ -1,81 +1,166 @@
-# Driver Ledger PH 🚛⛽
+# 🚛⛽ Driver Ledger PH
 
-Fuel consumption tracker web app for Philippines fleet managers. Works natively on iOS and Android as a PWA.
+Fuel consumption tracker for Philippine fleet managers. Works as a native-feeling installable app on
+iOS and Android, and as a full desktop dashboard on Mac and Windows.
 
-## Features
+**🌐 Live:** https://driverledger.sysitadmin.com
 
-- 📱 **Native Mobile Feel** - Installable PWA works like a native app on iOS/Android
-- 🌙 **Dark/Light Mode** - Toggle between themes
-- 🚚 **Driver Management** - Add drivers with vehicle info, fuel type (petrol/diesel), and custom consumption rate
-- 💰 **Custom Fuel Prices** - Set default price per liter per driver, auto-fills when adding entries
-- 👥 **User Roles** - Admin, Manager, Viewer, Driver
-- 📊 **Dashboard** - Monthly overview with total liters, cost, and average consumption
-- 📄 **Year-End Reports** - Generate reports by year with CSV export
-- 💾 **Backup/Restore** - Manual JSON backup export and import
+---
 
-## Tech Stack
+## ✨ What's inside
 
-- **Frontend**: Vanilla HTML/CSS/JS (PWA)
-- **Backend**: Node.js + Express
-- **Database**: SQLite (sql.js)
-- **Deployment**: Docker
+| | Feature | |
+| --- | --- | --- |
+| 📊 | **Real fuel economy** | Actual km/L computed from odometer deltas between fill-ups — not a made-up average |
+| 💸 | **Cost per kilometre** | True running cost in ₱/km, per driver and fleet-wide |
+| 🖥️ | **Desktop layout** | Sidebar navigation, dense data tables and multi-column cards on wide screens |
+| 📱 | **Mobile layout** | Bottom tab bar, cards and a floating action button, safe-area aware |
+| 🌗 | **Dark & light themes** | Follows your choice, saved per device |
+| 📄 | **PDF & CSV export** | Year-end reports for BIR and tax, plus a spreadsheet-friendly CSV with a BOM so Excel reads ₱ correctly |
+| 👥 | **Four roles** | Admin, Manager, Viewer, Driver — each sees exactly what it should |
+| 🔐 | **Real authentication** | scrypt-hashed passwords, bearer tokens, server-side RBAC, login throttling |
+| 📦 | **Installable** | Proper PWA with icons, standalone display and maskable support |
+| 💾 | **Permanent database** | SQLite on a named Docker volume, atomic writes, nightly verified backups to Cloudflare R2 |
+| 🇵🇭 | **Localised** | PHP currency, `en-PH` dates, realistic Filipino demo fleet |
 
-## Quick Start
+## 🎯 Why the km/L number is the point
 
-### Docker (Recommended)
+Most fuel trackers store a consumption rate and then report it back to you, which tells you nothing.
+This one takes the **distance between two odometer readings** and divides it by the litres filled at
+the second stop — the same method a fleet manager would use on a clipboard. That is why each driver
+shows a **rated** km/L (what the manufacturer claims) next to an **actual** km/L (what the vehicle
+really does), with the difference highlighted. A vehicle consistently below its rating is costing
+money, and the dashboard will say so.
+
+## 👥 Roles
+
+| Role | Sees | Can do |
+| --- | --- | --- |
+| 👑 **Admin** | Everything | Everything, including user management, backup and restore |
+| 🧑‍💼 **Manager** | Everything | Add and edit drivers, drivers and fuel records |
+| 👁️ **Viewer** | Everything | Read only |
+| 🚚 **Driver** | **Only their own fill-ups** | Read only |
+
+The driver restriction is enforced **on the server**, not just hidden in the UI — a driver who
+forges an API call still only receives their own records.
+
+## 🚀 Quick start
+
+### 🐳 Docker (recommended)
+
 ```bash
-docker build -t driver-ledger-ph https://github.com/Ferns1992/driver-ledger-ph.git
-docker run -d -p 4090:3000 driver-ledger-ph
+git clone https://github.com/Ferns1992/driver-ledger-ph.git
+cd driver-ledger-ph
+cp .env.example .env      # then edit the passwords
+docker compose up -d --build
 ```
 
-### Manual
+Open <http://localhost:4090> and sign in with the credentials in your `.env`.
+
+### 💻 Without Docker
+
 ```bash
 npm install
-node server.js
+npm start        # or: npm run seed   to load the demo fleet first
 ```
-Then open http://localhost:4090
 
-## Default Login
+## ⚙️ Configuration
 
-- Username: `admin`
-- Password: `admin123`
+All optional — copy `.env.example` to `.env` to change them.
 
-## Usage
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `ADMIN_USERNAME` | `admin` | Created on first boot only |
+| `ADMIN_PASSWORD` | `admin123` | Created on first boot only, minimum 8 characters |
+| `SEED_ON_EMPTY` | `true` | Loads the demo fleet when the database has no drivers |
+| `SESSION_TTL_HOURS` | `12` | How long a login stays valid |
+| `PORT` | `4090` | Internal listen port |
 
-### For Admin/Manager
-1. Add drivers with vehicle details and default fuel price
-2. Create users - select "Driver" role and assign to a driver
-3. Add fuel entries (drivers cannot add entries)
-4. View dashboard and generate reports
-5. Export backup regularly
+> 🔒 Passwords are stored as scrypt hashes and are **never** included in backups. Set
+> `SEED_ON_EMPTY=false` for a production install that must start empty.
 
-### For Drivers
-1. Login with driver account
-2. View your fuel records only
-3. Cannot add entries (admin does this)
+## 🧪 Demo data
 
-## API Endpoints
+The first boot seeds a realistic Philippine fleet — ten drivers, common delivery vehicles
+(Isuzu Elf, Mitsubishi Canter, Toyota Hilux, Nissan Urvan…), NCR plates, diesel and petrol prices
+that drift the way pump prices do, and **fifteen months of odometer-linked fill-ups** so every chart
+and report has something real to show.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/login | User login |
-| GET | /api/users | List users |
-| POST | /api/users | Create user |
-| DELETE | /api/users/:username | Delete user |
-| GET | /api/drivers | List drivers |
-| POST | /api/drivers | Add driver |
-| PUT | /api/drivers/:id | Update driver |
-| DELETE | /api/drivers/:id | Delete driver |
-| GET | /api/records | List fuel records |
-| POST | /api/records | Add fuel record |
-| GET | /api/backup | Download backup |
-| POST | /api/restore | Restore backup |
+| Account | Password | Role |
+| --- | --- | --- |
+| `admin` | see your `.env` | Admin |
+| `manager` | `demo1234` | Manager |
+| `viewer` | `demo1234` | Viewer |
+| `driver1` … `driver10` | `demo1234` | Driver, one per vehicle |
 
-## Environment
+To reseed from scratch, stop the app and delete the database — it will be recreated on next boot:
 
-- **Port**: 4090
-- **Database**: SQLite (stored in `/data` volume)
+```bash
+docker compose down && docker volume rm driver-ledger_data && docker compose up -d
+```
 
-## License
+## 🔌 API
+
+Every `/api` route except `POST /api/login` and `GET /api/health` requires
+`Authorization: Bearer <token>`.
+
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/login` | public | Sign in, returns a token |
+| `POST` | `/api/logout` | any | Invalidate the current token |
+| `GET` | `/api/me` | any | Current user |
+| `POST` | `/api/change-password` | any | Change your own password |
+| `GET` | `/api/stats` | any | Totals, per-driver economy, monthly series |
+| `GET` | `/api/drivers` | any | List drivers |
+| `POST` | `/api/drivers` | admin, manager | Create a driver |
+| `PUT` | `/api/drivers/:id` | admin, manager | Update a driver |
+| `DELETE` | `/api/drivers/:id` | admin, manager | Delete a driver (`{"force":true}` keeps orphaned records) |
+| `GET` | `/api/records` | any | List fuel records; drivers are scoped automatically |
+| `POST` | `/api/records` | admin, manager | Add a fuel record |
+| `PUT` | `/api/records/:id` | admin, manager | Update a fuel record |
+| `DELETE` | `/api/records/:id` | admin, manager | Delete a fuel record |
+| `GET` | `/api/users` | admin | List users |
+| `POST` | `/api/users` | admin | Create a user |
+| `PUT` | `/api/users/:id` | admin | Update a user |
+| `DELETE` | `/api/users/:id` | admin | Delete a user |
+| `GET` | `/api/backup` | admin | Download a JSON backup (no password hashes) |
+| `POST` | `/api/restore` | admin | Restore a backup, re-hashing any legacy plaintext passwords |
+| `GET` | `/api/health` | public | Liveness and record counts |
+
+## 🛡️ Security notes
+
+- 🔑 Passwords are hashed with **scrypt** and a per-user random salt, compared in constant time.
+- 🎟️ Sessions are random 256-bit bearer tokens stored server-side with an expiry, not cookies, so
+  there is no CSRF surface.
+- 🛡️ Failed logins are throttled per IP and username.
+- 🚧 Every endpoint is authenticated and role-checked **on the server**.
+- 📁 Static file serving is allow-listed — `server.js`, `package.json` and the database are not
+  reachable over HTTP.
+- 🧾 Backups exclude password hashes, and restoring requires re-entering the admin password.
+- ✍️ All user-supplied text is HTML-escaped on render, and interactive elements use delegated
+  listeners rather than inline handlers, so a name containing `<` or `'` cannot inject script.
+
+## 🗄️ Storage and backups
+
+The whole database is a single SQLite file, rewritten on every change. Writes go to a temporary file
+and are then renamed into place, so a crash mid-write cannot leave a truncated database.
+
+- 💾 `DB_PATH` lives on the **named Docker volume** `driver-ledger_data`, so it survives
+  `docker compose down`, image rebuilds and host reboots.
+- 🕒 A systemd timer takes a nightly snapshot at **03:47**, opens it to verify it is readable,
+  vacuums it, keeps 14 days locally in `/var/backups/driver-ledger`, and mirrors the newest to the
+  Cloudflare R2 bucket `driver-ledger-backups` with `rclone copy` (never `sync`).
+- 🔐 The R2 mirror runs on the host, so the backup credentials are never reachable from the web app.
+
+## 🖥️ Desktop layout
+
+The app is genuinely responsive rather than a stretched phone layout:
+
+- **≥ 900px** — fixed sidebar, sticky page header, data tables with right-aligned tabular numerals,
+  four-up stat cards, and modals that centre instead of sliding up from the bottom edge.
+- **< 900px** — bottom tab bar, stacked cards, and a floating action button, with
+  `env(safe-area-inset-bottom)` respected for notched phones.
+
+## 📄 Licence
 
 MIT

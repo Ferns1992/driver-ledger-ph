@@ -1,1495 +1,1203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1E3A5F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Driver Ledger PH</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <style>
-        :root {
-            --primary: #1E3A5F;
-            --secondary: #F59E0B;
-            --accent: #10B981;
-            --bg: #F8FAFC;
-            --surface: #FFFFFF;
-            --error: #EF4444;
-            --text: #1F2937;
-            --text-secondary: #6B7280;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --radius: 12px;
-            --radius-sm: 8px;
-            --radius-lg: 24px;
-            --border: #e5e7eb;
-        }
-        
-        [data-theme="dark"] {
-            --primary: #3B82F6;
-            --secondary: #F59E0B;
-            --accent: #10B981;
-            --bg: #111827;
-            --surface: #1F2937;
-            --error: #EF4444;
-            --text: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --shadow: 0 2px 8px rgba(0,0,0,0.3);
-            --border: #374151;
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        
-        input, select, textarea { -webkit-user-select: text; user-select: text; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding-bottom: 80px;
-            overflow-x: hidden;
-            touch-action: manipulation;
-        }
-        
-        .app-header {
-            background: var(--primary);
-            color: white;
-            padding: 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .app-header h1 { font-size: 1.25rem; font-weight: 700; }
-        
-        .app-header .user-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-        }
-        
-        .main-content { padding: 1rem; }
-        
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow);
-        }
-        
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--primary);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-        }
-        
-        .stat-item {
-            background: linear-gradient(135deg, var(--primary), #2d4a6f);
-            color: white;
-            padding: 1rem;
-            border-radius: var(--radius);
-            text-align: center;
-        }
-        
-        .stat-item.amber { background: linear-gradient(135deg, var(--secondary), #d97706); }
-        
-        .stat-value { font-size: 1.5rem; font-weight: 700; }
-        .stat-label { font-size: 0.75rem; opacity: 0.9; }
-        
-        .driver-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .driver-card:last-child { border-bottom: none; }
-        
-        .driver-info h3 { font-size: 1rem; margin-bottom: 0.25rem; }
-        .driver-info p { font-size: 0.875rem; color: var(--text-secondary); }
-        
-        .driver-rate {
-            text-align: right;
-        }
-        
-        .driver-rate .rate { 
-            font-weight: 700; 
-            color: var(--accent);
-            font-size: 1.125rem;
-        }
-        
-        .driver-rate .fuel-type {
-            font-size: 0.75rem;
-            padding: 0.125rem 0.5rem;
-            border-radius: 12px;
-            background: #eee;
-        }
-        
-        .driver-rate .fuel-type.diesel { background: #fef3c7; color: #92400e; }
-        .driver-rate .fuel-type.petrol { background: #d1fae5; color: #065f46; }
-        
-        .form-group { margin-bottom: 1rem; }
-        
-        .form-group label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-        }
-        
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 1rem;
-            background: var(--surface);
-            color: var(--text);
-        }
-        
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .btn {
-            padding: 0.875rem 1.5rem;
-            border: none;
-            border-radius: var(--radius-lg);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .btn:active { transform: scale(0.98); }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            width: 100%;
-        }
-        
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-            width: 100%;
-        }
-        
-        .btn-danger {
-            background: var(--error);
-            color: white;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .fab {
-            position: fixed;
-            bottom: 100px;
-            right: 1rem;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-            cursor: pointer;
-            z-index: 99;
-        }
-        
-        .fab:active { transform: scale(0.95); }
-        
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.75rem 0;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
-            z-index: 100;
-        }
-        
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius-sm);
-            transition: background 0.2s;
-        }
-        
-        .nav-item.active {
-            color: var(--primary);
-            background: rgba(30, 58, 95, 0.1);
-        }
-        
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 0.25rem;
-        }
-        
-        .page { display: none; }
-        .page.active { display: block; }
-        
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-        }
-        
-        .record-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .record-item:last-child { border-bottom: none; }
-        
-        .record-date { font-size: 0.75rem; color: var(--text-secondary); }
-        .record-driver { font-weight: 500; }
-        .record-amount { font-weight: 700; color: var(--primary); }
-        
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 200;
-        }
-        
-        .modal-overlay.active { display: flex; }
-        
-        .modal {
-            background: var(--surface);
-            width: 100%;
-            max-width: 480px;
-            border-radius: var(--radius) var(--radius) 0 0;
-            padding: 1.5rem;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .modal-header h2 { font-size: 1.25rem; }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-        
-        .login-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 2rem;
-            background: linear-gradient(135deg, var(--primary), #2d4a6f);
-        }
-        
-        .login-card {
-            background: var(--surface);
-            padding: 2rem;
-            border-radius: var(--radius);
-            width: 100%;
-            max-width: 360px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 10;
-        }
-        
-        .login-card h1 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-        
-        .login-card .btn { margin-top: 1rem; position: relative; z-index: 20; }
-        
-        .toggle-link {
-            text-align: center;
-            margin-top: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-        
-        .toggle-link button {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .user-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .badge-admin { background: #dbeafe; color: #1e40af; }
-        .badge-manager { background: #d1fae5; color: #065f46; }
-        .badge-viewer { background: #f3f4f6; color: #6b7280; }
-        .badge-driver { background: #fef3c7; color: #92400e; }
-        
-        .report-driver {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .report-total {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 700;
-            font-size: 1.125rem;
-            padding: 1rem;
-            background: var(--primary);
-            color: white;
-            border-radius: var(--radius);
-            margin-top: 1rem;
-        }
-        
-        .action-row {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .action-row button {
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            border: none;
-            font-size: 0.875rem;
-            cursor: pointer;
-        }
-        
-        .action-row .edit-btn { background: #e5e7eb; color: var(--text); }
-        .action-row .delete-btn { background: #fee2e2; color: var(--error); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Driver Ledger PH</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Vendored rather than loaded from a CDN so PDF export works offline. -->
+<script src="vendor/jspdf.umd.min.js" defer></script>
+<style>
+:root{
+  --primary:#1E3A5F; --primary-600:#2d4a6f; --secondary:#F59E0B; --accent:#10B981;
+  --bg:#F1F5F9; --surface:#FFFFFF; --surface-2:#F8FAFC; --error:#EF4444; --warn:#F59E0B;
+  --text:#1F2937; --text-2:#6B7280; --border:#E2E8F0;
+  --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --shadow-lg:0 8px 24px rgba(16,24,40,.10);
+  --r:12px; --r-sm:8px; --r-lg:999px;
+  --nav-h:64px; --sidebar-w:248px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+[data-theme=dark]{
+  --primary:#60A5FA; --primary-600:#3B82F6; --secondary:#F59E0B; --accent:#34D399;
+  --bg:#0F172A; --surface:#1E293B; --surface-2:#172033; --error:#F87171;
+  --text:#F1F5F9; --text-2:#94A3B8; --border:#334155;
+  --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--primary)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-        .filter-row {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
+/* ---------- layout ---------- */
+.shell{display:flex;min-height:100vh}
+.sidebar{
+  display:none;width:var(--sidebar-w);flex-direction:column;flex:0 0 var(--sidebar-w);
+  background:var(--surface);border-right:1px solid var(--border);padding:1.25rem 1rem;
+  position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:.65rem;padding:0 .5rem 1.25rem;font-weight:800;font-size:1.05rem}
+.brand-mark{
+  width:38px;height:38px;border-radius:10px;flex:0 0 38px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-600));
+  display:grid;place-items:center;color:#fff;font-size:1.15rem
+}
+.brand small{display:block;font-weight:500;font-size:.7rem;color:var(--text-2)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-btn{
+  display:flex;align-items:center;gap:.7rem;padding:.65rem .75rem;border-radius:var(--r-sm);
+  color:var(--text-2);font-weight:600;font-size:.9rem;text-align:left;width:100%;
+  transition:background .15s,color .15s;
+}
+.nav-btn svg{width:20px;height:20px;flex:0 0 20px}
+.nav-btn:hover{background:var(--surface-2);color:var(--text)}
+.nav-btn[aria-current=page]{background:color-mix(in srgb,var(--primary) 12%,transparent);color:var(--primary)}
+.sidebar-foot{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border)}
+.who{display:flex;align-items:center;gap:.6rem;padding:.5rem}
+.avatar{
+  width:34px;height:34px;border-radius:50%;flex:0 0 34px;display:grid;place-items:center;
+  background:var(--primary);color:#fff;font-weight:700;font-size:.8rem
+}
+.who-txt{min-width:0;flex:1}
+.who-txt b{display:block;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who-txt span{font-size:.72rem;color:var(--text-2);text-transform:capitalize}
 
-        .filter-row select {
-            flex: 1;
-            padding: 0.5rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid #e5e7eb;
-        }
-    </style>
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:none;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1rem 1.75rem;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;
+}
+.topbar h1{font-size:1.2rem;font-weight:700}
+.content{padding:1rem 1rem calc(var(--nav-h) + 2rem);max-width:1400px;width:100%}
+.bottomnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--surface);
+  border-top:1px solid var(--border);display:flex;
+  padding:.4rem .25rem calc(.4rem + env(safe-area-inset-bottom));
+}
+.bottomnav .nav-btn{
+  flex-direction:column;gap:.15rem;font-size:.68rem;padding:.45rem .2rem;border-radius:0;
+  justify-content:center;text-align:center;flex:1
+}
+.bottomnav .nav-btn svg{width:22px;height:22px}
+.bottomnav .nav-btn[aria-current=page]{background:none;color:var(--primary)}
+.fab{
+  position:fixed;right:1rem;bottom:calc(var(--nav-h) + 1rem);z-index:40;
+  width:56px;height:56px;border-radius:50%;background:var(--secondary);color:#fff;
+  font-size:1.6rem;line-height:1;box-shadow:0 6px 20px rgba(245,158,11,.45);
+  display:grid;place-items:center;transition:transform .12s
+}
+.fab:active{transform:scale(.94)}
+
+/* ---------- desktop ---------- */
+@media (min-width:900px){
+  .sidebar{display:flex}
+  .topbar{display:flex}
+  .bottomnav,.fab{display:none}
+  .content{padding:1.75rem 1.75rem 3rem}
+}
+
+/* ---------- components ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:1.1rem;margin-bottom:1rem}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.card-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.card-title .dot{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.grid{display:grid;gap:1rem}
+.stats{grid-template-columns:repeat(2,1fr)}
+@media (min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:1rem 1.1rem;box-shadow:var(--shadow);position:relative;overflow:hidden
+}
+.stat::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--primary)}
+.stat.amber::before{background:var(--secondary)}
+.stat.green::before{background:var(--accent)}
+.stat-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);font-weight:700}
+.stat-value{font-size:1.5rem;font-weight:800;margin-top:.2rem;letter-spacing:-.02em}
+@media (min-width:900px){.stat-value{font-size:1.75rem}}
+.stat-sub{font-size:.75rem;color:var(--text-2);margin-top:.15rem}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+  padding:.6rem 1.1rem;border-radius:var(--r-sm);font-weight:600;font-size:.875rem;
+  transition:filter .15s,transform .1s;white-space:nowrap
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff}
+[data-theme=dark] .btn-primary{color:#0F172A}
+.btn-secondary{background:var(--secondary);color:#fff}
+.btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--error);color:#fff}
+.btn-sm{padding:.35rem .65rem;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.1rem}
+table{width:100%;border-collapse:collapse;font-size:.875rem;min-width:520px}
+th{
+  text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--text-2);font-weight:700;padding:.6rem .7rem;border-bottom:1px solid var(--border);white-space:nowrap
+}
+td{padding:.7rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.money{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--accent);font-weight:700}
+.neg{color:var(--error);font-weight:700}
+
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--border)}
+.item:last-child{border-bottom:none}
+.item-main{min-width:0;flex:1}
+.item-main b{display:block;font-size:.9rem;font-weight:600}
+.item-main small{color:var(--text-2);font-size:.78rem}
+.item-side{text-align:right;white-space:nowrap}
+
+.badge{display:inline-flex;align-items:center;padding:.15rem .55rem;border-radius:var(--r-lg);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.badge-admin{background:#dbeafe;color:#1e40af}
+.badge-manager{background:#d1fae5;color:#065f46}
+.badge-viewer{background:#e2e8f0;color:#475569}
+.badge-driver{background:#fef3c7;color:#92400e}
+.badge-petrol{background:#d1fae5;color:#065f46}
+.badge-diesel{background:#fef3c7;color:#92400e}
+[data-theme=dark] .badge-admin{background:#1e3a8a;color:#bfdbfe}
+[data-theme=dark] .badge-manager{background:#064e3b;color:#a7f3d0}
+[data-theme=dark] .badge-viewer{background:#334155;color:#cbd5e1}
+[data-theme=dark] .badge-driver{background:#78350f;color:#fde68a}
+[data-theme=dark] .badge-petrol{background:#064e3b;color:#a7f3d0}
+[data-theme=dark] .badge-diesel{background:#78350f;color:#fde68a}
+
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text-2)}
+.empty .em{font-size:2rem;display:block;margin-bottom:.5rem;opacity:.6}
+
+.form-group{margin-bottom:.9rem}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--text-2);margin-bottom:.35rem}
+input,select,textarea{
+  width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:var(--r-sm);
+  background:var(--surface);color:var(--text);font-size:.95rem;min-height:42px
+}
+input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+input[type=number]{font-variant-numeric:tabular-nums}
+.hint{font-size:.75rem;color:var(--text-2);margin-top:.25rem}
+.form-2{display:grid;gap:0 .9rem;grid-template-columns:1fr}
+@media (min-width:560px){.form-2{grid-template-columns:1fr 1fr}}
+
+.filters{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem}
+.filters .form-group{margin:0;min-width:140px;flex:1}
+.filters label{font-size:.7rem}
+
+.overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);
+  display:none;align-items:flex-end;justify-content:center;z-index:60;padding:0
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--surface);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+  border-radius:var(--r) var(--r) 0 0;padding:1.25rem;
+  padding-bottom:calc(1.25rem + env(safe-area-inset-bottom));
+  animation:rise .22s ease
+}
+@keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:900px){
+  .overlay{align-items:center;padding:1.5rem}
+  .modal{border-radius:var(--r);animation:fade .18s ease}
+}
+@keyframes fade{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.modal-head h2{font-size:1.1rem;font-weight:700}
+.icon-btn{width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--text-2);font-size:1.3rem;line-height:1;flex:0 0 34px}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+.toasts{position:fixed;z-index:90;left:1rem;right:1rem;bottom:calc(var(--nav-h) + 5rem);display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+@media (min-width:900px){.toasts{left:auto;right:1.5rem;bottom:1.5rem;width:360px}}
+.toast{
+  background:var(--text);color:var(--bg);padding:.7rem 1rem;border-radius:var(--r-sm);
+  font-size:.875rem;font-weight:500;box-shadow:var(--shadow-lg);animation:rise .2s ease
+}
+.toast.err{background:var(--error);color:#fff}
+.toast.ok{background:var(--accent);color:#052e20}
+
+.chart{display:flex;align-items:flex-end;gap:.4rem;height:150px;padding-top:.5rem}
+.chart-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:.35rem;min-width:0}
+.chart-bar{width:100%;max-width:42px;background:linear-gradient(180deg,var(--primary),var(--primary-600));border-radius:5px 5px 0 0;min-height:3px;position:relative}
+.chart-bar::after{
+  content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  font-size:.65rem;font-weight:700;color:var(--text-2);margin-bottom:3px;white-space:nowrap
+}
+.chart-x{font-size:.62rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+.page{display:none}
+.page.active{display:block}
+.section-sub{font-size:.8rem;color:var(--text-2);margin-top:-.5rem;margin-bottom:1rem}
+
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:1.5rem;background:linear-gradient(140deg,#1E3A5F,#2d4a6f 60%,#0f2440)}
+.login-card{background:var(--surface);border-radius:var(--r);width:100%;max-width:400px;padding:1.75rem;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login-card h1{text-align:center;margin-bottom:1.5rem;display:grid;gap:.6rem;justify-items:center}
+.login-card h1 .brand-mark{width:52px;height:52px;font-size:1.5rem}
+.login-card h1 small{font-size:.75rem;color:var(--text-2);font-weight:500}
+.demo-note{margin-top:1rem;padding:.65rem .8rem;background:var(--surface-2);border:1px dashed var(--border);border-radius:var(--r-sm);font-size:.78rem;color:var(--text-2);text-align:center}
+@media (min-width:900px){.form-2.tight{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
-    <div id="loginScreen" class="login-screen">
-        <div class="login-card">
-            <h1>🚛 Driver Ledger PH</h1>
-            <form id="loginForm" onsubmit="return false;">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="loginUsername" required autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password">
-                </div>
-                <button type="button" class="btn btn-primary" id="loginBtn" style="margin-top:1rem;">Login</button>
-            </form>
+
+<!-- ============ LOGIN ============ -->
+<div id="login" class="login-wrap" hidden>
+  <form class="login-card" id="loginForm">
+    <h1>
+      <span class="brand-mark">🚛</span>
+      <span>Driver Ledger<small>Fuel tracking for Philippine fleets</small></span>
+    </h1>
+    <div class="form-group">
+      <label for="lgUser">Username</label>
+      <input id="lgUser" autocomplete="username" required>
+    </div>
+    <div class="form-group">
+      <label for="lgPass">Password</label>
+      <input id="lgPass" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-primary" style="width:100%" type="submit">Sign in</button>
+    <div class="demo-note" id="demoNote" hidden>Demo accounts: <b>admin</b> / <b>admin123</b></div>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="shell" class="shell" hidden>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">🚛</span>
+      <span>Driver Ledger<small>Fuel Ledger PH</small></span>
+    </div>
+    <nav class="nav" id="sideNav" aria-label="Main"></nav>
+    <div class="sidebar-foot">
+      <div class="who">
+        <span class="avatar" id="avatar">–</span>
+        <span class="who-txt"><b id="whoName">–</b><span id="whoRole">–</span></span>
+      </div>
+      <div class="btn-row" style="padding:0 .5rem .5rem">
+        <button class="btn btn-ghost btn-sm" id="themeBtnSide" title="Toggle theme">🌙 Dark</button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtnSide">Sign out</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" id="themeBtnTop" title="Toggle theme">🌙</button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtnTop">Sign out</button>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <section class="page active" id="page-dashboard"></section>
+      <section class="page" id="page-records"></section>
+      <section class="page" id="page-drivers"></section>
+      <section class="page" id="page-users" hidden></section>
+      <section class="page" id="page-settings"></section>
+    </main>
+  </div>
+
+  <button class="fab" id="fab" title="Add fuel entry" aria-label="Add fuel entry">+</button>
+  <nav class="bottomnav" id="botNav" aria-label="Main"></nav>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-head">
+    <h2 id="modalTitle"></h2>
+    <button class="icon-btn" id="modalClose" aria-label="Close">×</button>
+  </div>
+  <div id="modalBody"></div>
+</div></div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+/* ------------------------------------------------------------------ state */
+const state = {
+  token: localStorage.getItem('dl_token') || null,
+  user: JSON.parse(localStorage.getItem('dl_user') || 'null'),
+  drivers: [],
+  records: [],
+  users: [],
+  stats: null,
+  year: String(new Date().getFullYear()),
+  driverFilter: 'all',
+  page: 'dashboard',
+};
+
+const PAGES = {
+  dashboard: { label: 'Dashboard', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z', roles: ['admin', 'manager', 'viewer', 'driver'] },
+  records:   { label: 'Records',   icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8', roles: ['admin', 'manager', 'viewer', 'driver'] },
+  drivers:   { label: 'Drivers',   icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87', roles: ['admin', 'manager', 'viewer'] },
+  users:     { label: 'Users',     icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87', roles: ['admin'] },
+  settings:  { label: 'Settings',  icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1', roles: ['admin', 'manager', 'viewer', 'driver'] },
+};
+
+const isAdmin = () => state.user && state.user.role === 'admin';
+const canWrite = () => state.user && (state.user.role === 'admin' || state.user.role === 'manager');
+
+/* ------------------------------------------------------------------ utils */
+const esc = (v) => String(v === null || v === undefined ? '' : v)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+const peso = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const peso0 = (n) => '₱' + Math.round(Number(n || 0)).toLocaleString('en-PH');
+const num = (n, d = 1) => Number(n || 0).toFixed(d);
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function fmtDate(iso) {
+  if (!iso) return '–';
+  const d = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return esc(iso);
+  return d.toLocaleDateString('en-PH', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtMonth(m) {
+  const d = new Date(`${m}-01T00:00:00`);
+  return Number.isNaN(d.getTime()) ? m : d.toLocaleDateString('en-PH', { month: 'short', year: '2-digit' });
+}
+function toast(msg, kind = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${kind}`;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 3200);
+  setTimeout(() => el.remove(), 3600);
+}
+
+/* ------------------------------------------------------------------ api */
+async function api(path, options = {}) {
+  const opts = { ...options, headers: { ...(options.headers || {}) } };
+  if (opts.body !== undefined) opts.headers['Content-Type'] = 'application/json';
+  if (state.token) opts.headers['Authorization'] = `Bearer ${state.token}`;
+
+  let res;
+  try {
+    res = await fetch(path, opts);
+  } catch {
+    throw new Error('Cannot reach the server. Check your connection.');
+  }
+
+  let data = null;
+  const text = await res.text();
+  if (text) { try { data = JSON.parse(text); } catch { data = null; } }
+
+  if (res.status === 401 && state.token) {
+    logout(true);
+    throw new Error('Session expired. Please sign in again.');
+  }
+  if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
+  return data;
+}
+
+/* ------------------------------------------------------------------ shell */
+function allowedPages() {
+  return Object.keys(PAGES).filter((k) => PAGES[k].roles.includes(state.user.role));
+}
+
+function buildNav() {
+  const pages = allowedPages();
+  const item = (k) => {
+    const p = PAGES[k];
+    return `<button class="nav-btn" data-nav="${k}"${state.page === k ? ' aria-current="page"' : ''}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${p.icon}"/></svg>
+      <span>${p.label}</span></button>`;
+  };
+  $('#sideNav').innerHTML = pages.map(item).join('');
+  $('#botNav').innerHTML = pages.map(item).join('');
+  $('#page-users').hidden = !isAdmin();
+
+  const initials = (state.user.username || '?').slice(0, 2).toUpperCase();
+  $('#avatar').textContent = initials;
+  $('#whoName').textContent = state.user.username;
+  $('#whoRole').textContent = state.user.role;
+}
+
+function go(page) {
+  if (!allowedPages().includes(page)) page = 'dashboard';
+  state.page = page;
+  $$('.page').forEach((p) => p.classList.remove('active'));
+  const el = $(`#page-${page}`);
+  el.classList.add('active');
+  el.hidden = false;
+  $('#pageTitle').textContent = PAGES[page].label;
+  buildNav();
+  render(page);
+  window.scrollTo(0, 0);
+}
+
+/* ------------------------------------------------------------------ data */
+async function loadData() {
+  const [drivers, records, stats] = await Promise.all([
+    api('/api/drivers'),
+    api('/api/records'),
+    api(`/api/stats${state.year !== 'all' ? `?year=${state.year}` : ''}`),
+  ]);
+  state.drivers = drivers;
+  state.records = records;
+  state.stats = stats;
+  if (isAdmin()) {
+    state.users = await api('/api/users');
+  } else {
+    state.users = [];
+  }
+}
+
+const driverById = (id) => state.drivers.find((d) => d.id === Number(id));
+const visibleDrivers = () => (state.user.role === 'driver'
+  ? state.drivers.filter((d) => d.id === state.user.driverId)
+  : state.drivers);
+
+/* ------------------------------------------------------------------ render */
+function render(page) {
+  ({
+    dashboard: renderDashboard,
+    records: renderRecords,
+    drivers: renderDrivers,
+    users: renderUsers,
+    settings: renderSettings,
+  }[page] || renderDashboard)();
+}
+
+function yearOptions(selected) {
+  const now = new Date().getFullYear();
+  const years = [];
+  for (let y = now; y >= now - 4; y -= 1) years.push(y);
+  return years.map((y) => `<option value="${y}"${String(y) === String(selected) ? ' selected' : ''}>${y}</option>`).join('');
+}
+
+function renderDashboard() {
+  const s = state.stats;
+  const t = s ? s.totals : { liters: 0, cost: 0, entries: 0, costPerKm: null, drivers: 0 };
+  const perDriver = (s && s.perDriver) || [];
+  const withActual = perDriver.filter((d) => d.avgKmPerLiter);
+  const fleetAvg = (() => {
+    const km = withActual.reduce((a, d) => a + d.totalKm, 0);
+    const l = withActual.reduce((a, d) => a + (d.totalKm / d.avgKmPerLiter), 0);
+    return l > 0 ? km / l : null;
+  })();
+  const monthly = (s && s.monthly) || [];
+  const maxCost = Math.max(1, ...monthly.map((m) => m.cost));
+
+  const recent = state.records.slice(0, 8);
+
+  $('#page-dashboard').innerHTML = `
+    <div class="filters">
+      <div class="form-group"><label for="dashYear">Period</label>
+        <select id="dashYear"><option value="all">All time</option>${yearOptions(state.year)}</select></div>
+      <div class="form-group" style="justify-content:flex-end">
+        <button class="btn btn-primary" id="addEntryTop"${canWrite() && state.drivers.length ? '' : ' disabled'}>+ Add fuel entry</button>
+      </div>
+    </div>
+
+    <div class="grid stats" style="margin-bottom:1rem">
+      <div class="stat"><div class="stat-label">Total litres</div><div class="stat-value">${num(t.liters)}</div><div class="stat-sub">${t.entries} entries</div></div>
+      <div class="stat amber"><div class="stat-label">Total spend</div><div class="stat-value">${peso0(t.cost)}</div><div class="stat-sub">${t.drivers} vehicle${t.drivers === 1 ? '' : 's'}</div></div>
+      <div class="stat green"><div class="stat-label">Actual km/L</div><div class="stat-value">${fleetAvg ? num(fleetAvg) : '–'}</div><div class="stat-sub">${fleetAvg ? 'from odometer' : 'needs 2+ readings'}</div></div>
+      <div class="stat"><div class="stat-label">Cost per km</div><div class="stat-value">${t.costPerKm ? peso(t.costPerKm) : '–'}</div><div class="stat-sub">${t.costPerKm ? 'true running cost' : 'needs odometer'}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="dot"></span>Monthly spend</div></div>
+      ${monthly.length ? `<div class="chart">${monthly.slice(-12).map((m) => `
+        <div class="chart-col" title="${esc(fmtMonth(m.month))}: ${esc(peso(m.cost))}">
+          <div class="chart-bar" style="height:${Math.max(3, (m.cost / maxCost) * 100)}%" data-label="${esc(peso0(m.cost))}"></div>
+          <div class="chart-x">${esc(fmtMonth(m.month))}</div>
+        </div>`).join('')}</div>`
+        : '<div class="empty"><span class="em">📉</span>No data for this period</div>'}
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot"></span>${state.user.role === 'driver' ? 'My recent fill-ups' : 'Recent fill-ups'}</div>
+        <button class="btn btn-ghost btn-sm" data-nav="records">View all →</button>
+      </div>
+      ${recent.length ? `<div class="list">${recent.map((r) => {
+        const d = driverById(r.driverId);
+        return `<div class="item">
+          <div class="item-main">
+            <b>${esc(d ? d.name : 'Unassigned')} · ${num(r.liters)} L</b>
+            <small>${esc(fmtDate(r.date))} · ${esc(peso(r.pricePerLiter))}/L${r.odometer ? ` · ${num(r.odometer, 0)} km` : ''}</small>
+          </div>
+          <div class="item-side money">${esc(peso(r.total))}</div>
+        </div>`;
+      }).join('')}</div>` : '<div class="empty"><span class="em">⛽</span>No fill-ups recorded yet</div>'}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="dot"></span>Fuel economy by driver</div></div>
+      ${perDriver.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Driver</th><th>Vehicle</th><th class="num">Litres</th><th class="num">Cost</th><th class="num">km/L actual</th><th class="num">vs rated</th></tr></thead>
+        <tbody>${perDriver.map((d) => {
+          const diff = d.avgKmPerLiter && d.driver.consumptionRate ? d.avgKmPerLiter - d.driver.consumptionRate : null;
+          return `<tr>
+            <td><b>${esc(d.driver.name)}</b></td>
+            <td>${esc(d.driver.vehicle)} <span class="badge badge-${esc(d.driver.fuelType)}">${esc(d.driver.fuelType)}</span></td>
+            <td class="num">${num(d.liters)}</td>
+            <td class="num money">${esc(peso(d.cost))}</td>
+            <td class="num"><b>${d.avgKmPerLiter ? num(d.avgKmPerLiter) : '–'}</b></td>
+            <td class="num">${diff === null ? '–' : `<span class="${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : ''}${num(diff)}</span>`}</td>
+          </tr>`;
+        }).join('')}</tbody></table></div>`
+        : '<div class="empty"><span class="em">🚚</span>No drivers yet</div>'}
+    </div>`;
+
+  $('#dashYear').onchange = async (e) => {
+    state.year = e.target.value;
+    await loadData();
+    renderDashboard();
+  };
+  const add = $('#addEntryTop');
+  if (add) add.onclick = openEntryModal;
+}
+
+function renderRecords() {
+  const canEdit = canWrite();
+  const yf = state.year;
+  const df = state.driverFilter;
+
+  let list = state.records;
+  if (yf !== 'all') list = list.filter((r) => String(r.date).slice(0, 4) === yf);
+  if (df !== 'all') list = list.filter((r) => String(r.driverId) === df);
+
+  $('#page-records').innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot"></span>Fuel records</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="expCsv">⬇ CSV</button>
+          <button class="btn btn-ghost btn-sm" id="expPdf">⬇ PDF</button>
+          ${canEdit ? '<button class="btn btn-primary btn-sm" id="addEntryInline">+ Add</button>' : ''}
         </div>
-    </div>
+      </div>
+      <div class="filters">
+        <div class="form-group"><label for="recYear">Year</label>
+          <select id="recYear"><option value="all">All time</option>${yearOptions(yf)}</select></div>
+        <div class="form-group"><label for="recDriver">Driver</label>
+          <select id="recDriver"><option value="all">All drivers</option>
+            ${visibleDrivers().map((d) => `<option value="${d.id}"${String(d.id) === df ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}
+          </select></div>
+        <div class="form-group" style="min-width:120px"><label>Showing</label>
+          <div style="padding:.55rem 0;font-weight:700">${list.length} record${list.length === 1 ? '' : 's'}</div></div>
+      </div>
+      ${list.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Driver</th><th>Vehicle</th><th class="num">Litres</th><th class="num">Price/L</th><th class="num">Total</th><th class="num">Odometer</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+        <tbody>${list.map((r) => {
+          const d = driverById(r.driverId);
+          return `<tr>
+            <td>${esc(fmtDate(r.date))}</td>
+            <td><b>${esc(d ? d.name : 'Unassigned')}</b></td>
+            <td>${esc(d ? d.plate || d.vehicle : '–')}</td>
+            <td class="num">${num(r.liters)}</td>
+            <td class="num">${esc(peso(r.pricePerLiter))}</td>
+            <td class="num money">${esc(peso(r.total))}</td>
+            <td class="num">${r.odometer ? num(r.odometer, 0) : '–'}</td>
+            ${canEdit ? `<td><div class="btn-row" style="flex-wrap:nowrap;justify-content:flex-end">
+              <button class="btn btn-ghost btn-sm" data-edit-record="${r.id}">Edit</button>
+              <button class="btn btn-ghost btn-sm" data-del-record="${r.id}" style="color:var(--error)">Del</button>
+            </div></td>` : ''}
+          </tr>`;
+        }).join('')}</tbody></table></div>`
+        : '<div class="empty"><span class="em">📋</span>No records match these filters</div>'}
+    </div>`;
 
-    <div id="app" style="display:none;">
-        <header class="app-header">
-            <h1>🚛 Driver Ledger</h1>
-            <div style="display:flex;gap:0.5rem;align-items:center;">
-                <button type="button" class="user-btn" id="themeBtn" title="Toggle Theme" style="min-width:40px;" onclick="toggleTheme()">🌙</button>
-                <button class="user-btn" onclick="showUserModal()" id="userDisplay">User</button>
-            </div>
-        </header>
+  $('#recYear').onchange = async (e) => { state.year = e.target.value; await loadData(); renderRecords(); };
+  $('#recDriver').onchange = (e) => { state.driverFilter = e.target.value; renderRecords(); };
+  $('#expCsv').onclick = () => exportCSV(list);
+  $('#expPdf').onclick = () => exportPDF(list);
+  const addBtn = $('#addEntryInline');
+  if (addBtn) addBtn.onclick = openEntryModal;
 
-        <main class="main-content">
-            <div id="page-dashboard" class="page active">
-                <div class="card">
-                    <div class="card-title">📊 Monthly Overview</div>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalLiters">0</div>
-                            <div class="stat-label">Liters</div>
-                        </div>
-                        <div class="stat-item amber">
-                            <div class="stat-value" id="totalCost">₱0</div>
-                            <div class="stat-label">Total Cost</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="avgConsumption">0</div>
-                            <div class="stat-label">km/L Avg</div>
-                        </div>
-                        <div class="stat-item amber">
-                            <div class="stat-value" id="totalRecords">0</div>
-                            <div class="stat-label">Entries</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-title">⛽ Recent Entries</div>
-                    <div id="recentEntries"></div>
-                </div>
-            </div>
+  $$('[data-edit-record]').forEach((b) => { b.onclick = () => openEntryModal(Number(b.dataset.editRecord)); });
+  $$('[data-del-record]').forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm('Delete this fuel record? This cannot be undone.')) return;
+      try {
+        await api(`/api/records/${b.dataset.delRecord}`, { method: 'DELETE' });
+        toast('Record deleted', 'ok');
+        await loadData(); renderRecords(); renderDashboard();
+      } catch (e) { toast(e.message, 'err'); }
+    };
+  });
+}
 
-            <div id="page-drivers" class="page">
-                <div class="card">
-                    <div class="card-title">🚚 Drivers</div>
-                    <div id="driversList"></div>
-                    <button class="btn btn-primary" onclick="showDriverModal()" style="margin-top:1rem;">+ Add Driver</button>
-                </div>
-            </div>
+function renderDrivers() {
+  const canEdit = canWrite();
+  const list = visibleDrivers();
 
-            <div id="page-records" class="page">
-                <div class="card">
-                    <div class="card-title">📝 Fuel Records</div>
-                    <div class="filter-row">
-                        <select id="yearFilter" onchange="renderRecords()">
-                            <option value="all">All Years</option>
-                        </select>
-                        <select id="driverFilter" onchange="renderRecords()">
-                            <option value="all">All Drivers</option>
-                        </select>
-                    </div>
-                    <div id="recordsList"></div>
-                </div>
-            </div>
+  $('#page-drivers').innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot"></span>Fleet</div>
+        ${canEdit ? '<button class="btn btn-primary btn-sm" id="addDriver">+ Add driver</button>' : ''}
+      </div>
+      ${list.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Driver</th><th>Vehicle</th><th>Plate</th><th>Fuel</th><th class="num">Rated km/L</th><th class="num">Default ₱/L</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+        <tbody>${list.map((d) => `<tr>
+          <td><b>${esc(d.name)}</b></td>
+          <td>${esc(d.vehicle)}</td>
+          <td>${esc(d.plate || '–')}</td>
+          <td><span class="badge badge-${esc(d.fuelType)}">${esc(d.fuelType)}</span></td>
+          <td class="num">${num(d.consumptionRate)}</td>
+          <td class="num">${esc(peso(d.defaultPrice))}</td>
+          ${canEdit ? `<td><div class="btn-row" style="flex-wrap:nowrap;justify-content:flex-end">
+            <button class="btn btn-ghost btn-sm" data-edit-driver="${d.id}">Edit</button>
+            <button class="btn btn-ghost btn-sm" data-del-driver="${d.id}" style="color:var(--error)">Del</button>
+          </div></td>` : ''}
+        </tr>`).join('')}</tbody></table></div>`
+        : '<div class="empty"><span class="em">🚚</span>No drivers yet' + (canEdit ? ' – add your first one' : '') + '</div>'}
+    </div>`;
 
-            <div id="page-settings" class="page">
-                <div class="card">
-                    <div class="card-title">⚙️ User Management</div>
-                    <div id="usersList"></div>
-                    <button class="btn btn-outline" onclick="showAddUserModal()" style="margin-top:1rem;">+ Add User</button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-title">📄 Year-End Report</div>
-                    <div class="filter-row">
-                        <select id="reportYear">
-                            <option value="2026">2026</option>
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
-                    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
-                        <button class="btn btn-outline" onclick="exportCSV()" style="flex:1;">📊 CSV</button>
-                        <button class="btn btn-outline" onclick="exportPDF()" style="flex:1;">📄 PDF</button>
-                        <button class="btn btn-outline" onclick="sharePDF()" style="flex:1;">📱 Share</button>
-                    </div>
-                    <div id="reportContent" style="margin-top:1rem;"></div>
-                </div>
+  const addBtn = $('#addDriver');
+  if (addBtn) addBtn.onclick = () => openDriverModal();
+  $$('[data-edit-driver]').forEach((b) => { b.onclick = () => openDriverModal(Number(b.dataset.editDriver)); });
+  $$('[data-del-driver]').forEach((b) => {
+    b.onclick = async () => {
+      const d = driverById(b.dataset.delDriver);
+      if (!confirm(`Delete ${d ? d.name : 'this driver'}?`)) return;
+      try {
+        await api(`/api/drivers/${b.dataset.delDriver}`, { method: 'DELETE' });
+        toast('Driver deleted', 'ok');
+        await loadData(); renderDrivers(); renderDashboard();
+      } catch (e) {
+        if (/fuel record/.test(e.message)) {
+          if (confirm(`${e.message}\n\nDelete the driver and keep the records as "Unassigned"?`)) {
+            try {
+              await api(`/api/drivers/${b.dataset.delDriver}`, { method: 'DELETE', body: JSON.stringify({ force: true }) });
+              toast('Driver deleted', 'ok');
+              await loadData(); renderDrivers(); renderDashboard();
+            } catch (e2) { toast(e2.message, 'err'); }
+          }
+        } else { toast(e.message, 'err'); }
+      }
+    };
+  });
+}
 
-                <div class="card">
-                    <div class="card-title">💾 Backup & Restore</div>
-                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;">Export your data for safekeeping or import a previous backup.</p>
-                    <button class="btn btn-primary" onclick="exportBackup()">📥 Download Backup</button>
-                    <button class="btn btn-outline" onclick="document.getElementById('restoreFile').click()" style="margin-top:0.5rem;">📤 Restore Backup</button>
-                    <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="importBackup(this)">
-                </div>
-            </div>
-        </main>
+function renderUsers() {
+  $('#page-users').innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot"></span>User accounts</div>
+        <button class="btn btn-primary btn-sm" id="addUser">+ Add user</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Username</th><th>Role</th><th>Linked driver</th><th></th></tr></thead>
+        <tbody>${state.users.map((u) => {
+          const d = driverById(u.driverId);
+          return `<tr>
+            <td><b>${esc(u.username)}</b>${u.username === state.user.username ? ' <span class="badge badge-viewer">you</span>' : ''}</td>
+            <td><span class="badge badge-${esc(u.role)}">${esc(u.role)}</span></td>
+            <td>${d ? esc(d.name) : '–'}</td>
+            <td><div class="btn-row" style="flex-wrap:nowrap;justify-content:flex-end">
+              <button class="btn btn-ghost btn-sm" data-edit-user="${u.id}">Edit</button>
+              ${u.username === 'admin' ? '' : `<button class="btn btn-ghost btn-sm" data-del-user="${u.id}" style="color:var(--error)">Del</button>`}
+            </div></td>
+          </tr>`;
+        }).join('')}</tbody></table></div>
+    </div>`;
 
-        <button class="fab" onclick="showAddEntryModal()">+</button>
+  $('#addUser').onclick = () => openUserModal();
+  $$('[data-edit-user]').forEach((b) => { b.onclick = () => openUserModal(Number(b.dataset.editUser)); });
+  $$('[data-del-user]').forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm('Delete this user account?')) return;
+      try {
+        await api(`/api/users/${b.dataset.delUser}`, { method: 'DELETE' });
+        toast('User deleted', 'ok');
+        await loadData(); renderUsers();
+      } catch (e) { toast(e.message, 'err'); }
+    };
+  });
+}
 
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-page="dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                Dashboard
-            </button>
-            <button class="nav-item" data-page="drivers">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Drivers
-            </button>
-            <button class="nav-item" data-page="records">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Records
-            </button>
-            <button class="nav-item" data-page="settings">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Settings
-            </button>
-        </nav>
-    </div>
-
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 id="modalTitle">Add Entry</h2>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="modalContent"></div>
+function renderSettings() {
+  $('#page-settings').innerHTML = `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem"><span class="dot"></span>Your account</div>
+      <p style="font-size:.875rem;color:var(--text-2);margin-bottom:1rem">
+        Signed in as <b style="color:var(--text)">${esc(state.user.username)}</b>
+        (<span class="badge badge-${esc(state.user.role)}">${esc(state.user.role)}</span>)
+      </p>
+      <form id="pwForm">
+        <div class="form-2">
+          <div class="form-group"><label for="pwCur">Current password</label><input type="password" id="pwCur" autocomplete="current-password" required></div>
+          <div class="form-group"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="8" required><div class="hint">At least 8 characters</div></div>
         </div>
+        <button class="btn btn-primary" type="submit">Update password</button>
+      </form>
     </div>
 
-    <script>
-        const API = window.location.origin;
-        let currentUser = null;
-        let drivers = [];
-        let records = [];
-        let users = [];
+    ${isAdmin() ? `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.35rem"><span class="dot"></span>Year-end report</div>
+      <p class="section-sub">Totals per driver for BIR / tax purposes.</p>
+      <div class="filters">
+        <div class="form-group"><label for="repYear">Year</label><select id="repYear">${yearOptions(state.year === 'all' ? new Date().getFullYear() : state.year)}</select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="genReport">Generate</button>
+        <button class="btn btn-ghost" id="repCsv">⬇ CSV</button>
+        <button class="btn btn-ghost" id="repPdf">⬇ PDF</button>
+      </div>
+      <div id="reportOut" style="margin-top:1rem"></div>
+    </div>
 
-        async function apiCall(endpoint, options = {}) {
-            const res = await fetch(API + endpoint, {
-                ...options,
-                headers: { 'Content-Type': 'application/json', ...options.headers }
-            });
-            return res.json();
-        }
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.35rem"><span class="dot"></span>Backup &amp; restore</div>
+      <p class="section-sub">Backups exclude password hashes. Restoring replaces all current data.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="dlBackup">⬇ Download backup</button>
+        <button class="btn btn-ghost" id="upBackup">⬆ Restore backup</button>
+      </div>
+      <input type="file" id="backupFile" accept="application/json,.json" hidden>
+    </div>` : ''}
 
-        async function init() {
-            const savedTheme = localStorage.getItem('dl_theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.getElementById('themeBtn').innerHTML = '☀️';
-            }
-            
-            const savedUser = localStorage.getItem('dl_currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                await loadData();
-                showApp();
-            }
-            setupNav();
-            populateYearFilter();
-            
-            const loginBtn = document.getElementById('loginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', handleLogin);
-            }
-        }
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.35rem"><span class="dot"></span>Appearance</div>
+      <p class="section-sub">Theme is saved on this device.</p>
+      <div class="btn-row"><button class="btn btn-ghost" id="themeRow">Toggle dark / light</button></div>
+    </div>`;
 
-        function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.getAttribute('data-theme') === 'dark';
-            if (isDark) {
-                html.setAttribute('data-theme', 'light');
-                localStorage.setItem('dl_theme', 'light');
-                document.getElementById('themeBtn').innerHTML = '🌙';
-            } else {
-                html.setAttribute('data-theme', 'dark');
-                localStorage.setItem('dl_theme', 'dark');
-                document.getElementById('themeBtn').innerHTML = '☀️';
-            }
-        }
+  $('#pwForm').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api('/api/change-password', { method: 'POST', body: JSON.stringify({
+        currentPassword: $('#pwCur').value, newPassword: $('#pwNew').value,
+      }) });
+      toast('Password updated', 'ok');
+      e.target.reset();
+    } catch (err) { toast(err.message, 'err'); }
+  };
 
-        async function loadData() {
-            users = await apiCall('/api/users');
-            drivers = await apiCall('/api/drivers');
-            records = await apiCall('/api/records');
-        }
+  $('#themeRow').onclick = toggleTheme;
 
-        function showLogin() {
-            document.getElementById('loginForm').style.display = 'block';
-        }
+  const g = $('#genReport');
+  if (g) {
+    g.onclick = () => showReport($('#repYear').value);
+    $('#repCsv').onclick = () => {
+      const y = $('#repYear').value;
+      exportCSV(state.records.filter((r) => String(r.date).slice(0, 4) === y));
+    };
+    $('#repPdf').onclick = () => {
+      const y = $('#repYear').value;
+      exportPDF(state.records.filter((r) => String(r.date).slice(0, 4) === y));
+    };
+    $('#dlBackup').onclick = async () => {
+      try {
+        const res = await fetch('/api/backup', { headers: { Authorization: `Bearer ${state.token}` } });
+        if (!res.ok) throw new Error('Backup failed');
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `driverledger_backup_${todayISO()}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      } catch (e) { toast(e.message, 'err'); }
+    };
+    $('#upBackup').onclick = () => $('#backupFile').click();
+    $('#backupFile').onchange = async (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      ev.target.value = '';
+      const pw = prompt('Re-entering your admin password is required to restore.\n\nAdmin password:');
+      if (pw === null) return;
+      try {
+        const data = JSON.parse(await file.text());
+        const res = await api('/api/restore', { method: 'POST', body: JSON.stringify({ ...data, adminPassword: pw }) });
+        toast(`Restored ${res.restored.records} records`, 'ok');
+        await loadData(); render('settings');
+      } catch (e) { toast(e.message, 'err'); }
+    };
+  }
+}
 
-        async function handleLogin() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            if (!username || !password) {
-                alert('Please enter username and password');
-                return;
-            }
-            const result = await apiCall('/api/login', {
-                method: 'POST',
-                body: JSON.stringify({ username, password })
-            });
-            if (result.success) {
-                currentUser = result.user;
-                localStorage.setItem('dl_currentUser', JSON.stringify(result.user));
-                await loadData();
-                showApp();
-            } else {
-                alert(result.error || 'Invalid credentials');
-            }
-        }
+function showReport(year) {
+  const per = (state.stats.perDriver || []).filter((d) => d.entries > 0);
+  const rows = per.map((d) => ({ name: d.driver.name, vehicle: d.driver.vehicle, plate: d.driver.plate, liters: d.liters, cost: d.cost, kmpl: d.avgKmPerLiter }));
+  if (!rows.length) {
+    $('#reportOut').innerHTML = '<div class="empty"><span class="em">📄</span>No activity for ' + esc(year) + '</div>';
+    return;
+  }
+  const tl = rows.reduce((a, r) => a + r.liters, 0);
+  const tc = rows.reduce((a, r) => a + r.cost, 0);
+  $('#reportOut').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Driver</th><th>Vehicle</th><th class="num">Litres</th><th class="num">Cost</th><th class="num">km/L</th></tr></thead>
+    <tbody>${rows.map((r) => `<tr>
+      <td><b>${esc(r.name)}</b><br><small style="color:var(--text-2)">${esc(r.plate || '')}</small></td>
+      <td>${esc(r.vehicle)}</td><td class="num">${num(r.liters)}</td>
+      <td class="num money">${esc(peso(r.cost))}</td>
+      <td class="num">${r.kmpl ? num(r.kmpl) : '–'}</td></tr>`).join('')}
+      <tr><td colspan="2"><b>Total</b></td><td class="num"><b>${num(tl)}</b></td><td class="num money"><b>${esc(peso(tc))}</b></td><td></td></tr>
+    </tbody></table></div>`;
+}
 
-        function showApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            document.getElementById('userDisplay').textContent = currentUser.username;
-            
-            if (currentUser.role === 'driver') {
-                showDriverView();
-            } else {
-                renderDashboard();
-                renderDrivers();
-                renderRecords();
-                renderUsers();
-            }
-        }
+/* ------------------------------------------------------------------ modals */
+function openModal(title, html) {
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = html;
+  $('#overlay').classList.add('open');
+  const first = $('#modalBody input, #modalBody select, #modalBody button');
+  if (first) setTimeout(() => first.focus(), 60);
+}
+function closeModal() { $('#overlay').classList.remove('open'); $('#modalBody').innerHTML = ''; }
 
-        function showDriverView() {
-            const myDriver = drivers.find(d => d.id === currentUser.driverId);
-            document.getElementById('page-dashboard').innerHTML = `
-                <div class="card">
-                    <div class="card-title">🚚 My Profile</div>
-                    <div style="padding:1rem;">
-                        <h3>${myDriver?.name || 'Driver'}</h3>
-                        <p>${myDriver?.vehicle} (${myDriver?.plate})</p>
-                        <p>Fuel Type: <span class="fuel-type ${myDriver?.fuelType}">${myDriver?.fuelType}</span></p>
-                        <p>Consumption: ${myDriver?.consumptionRate} km/L</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-title">📊 My Fuel Records</div>
-                    <div id="driverRecords"></div>
-                </div>
-            `;
-            
-            const myRecords = records.filter(r => r.driverId === currentUser.driverId);
-            
-            document.getElementById('driverRecords').innerHTML = myRecords.length === 0 
-                ? '<div class="empty-state">No fuel records yet</div>'
-                : myRecords.map(r => `<div class="record-item">
-                    <div>
-                        <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
-                        <div>${r.liters}L @ ₱${r.pricePerLiter}/L</div>
-                        <div class="record-date">Odometer: ${r.odometer} km</div>
-                    </div>
-                    <div class="record-amount">₱${r.total.toFixed(2)}</div>
-                </div>`).join('');
-            
-            document.querySelectorAll('.nav-item').forEach(n => n.style.display = 'none');
-            document.querySelector('.fab').style.display = 'none';
-        }
+const driverOptions = (sel) => state.drivers.map((d) =>
+  `<option value="${d.id}"${String(d.id) === String(sel) ? ' selected' : ''}>${esc(d.name)} — ${esc(d.plate || d.vehicle)}</option>`).join('');
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('dl_currentUser');
-            location.reload();
-        }
+function openEntryModal(id = null) {
+  if (!state.drivers.length) { toast('Add a driver first', 'err'); return; }
+  const r = id ? state.records.find((x) => x.id === id) : null;
+  const d = r ? driverById(r.driverId) : state.drivers[0];
 
-        function setupNav() {
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                    document.getElementById('page-' + btn.dataset.page).classList.add('active');
-                };
-            });
-        }
+  openModal(r ? 'Edit fuel entry' : 'Add fuel entry', `
+    <form id="entryForm">
+      <div class="form-group"><label for="eDriver">Driver</label>
+        <select id="eDriver" required>${driverOptions(r ? r.driverId : d.id)}</select></div>
+      <div class="form-2">
+        <div class="form-group"><label for="eDate">Date</label>
+          <input type="date" id="eDate" value="${r ? esc(String(r.date).slice(0, 10)) : todayISO()}" max="${todayISO()}" required></div>
+        <div class="form-group"><label for="eOdo">Odometer (km)</label>
+          <input type="number" id="eOdo" min="0" step="1" value="${r ? r.odometer || '' : ''}" placeholder="e.g. 128450">
+          <div class="hint">Needed to calculate real km/L</div></div>
+      </div>
+      <div class="form-2">
+        <div class="form-group"><label for="eLiters">Litres</label>
+          <input type="number" id="eLiters" min="0.01" max="2000" step="0.01" value="${r ? r.liters : ''}" required></div>
+        <div class="form-group"><label for="ePrice">Price per litre (₱)</label>
+          <input type="number" id="ePrice" min="0.01" max="10000" step="0.01" value="${r ? r.pricePerLiter : (d.defaultPrice || 60)}" required></div>
+      </div>
+      <div class="card" style="background:var(--surface-2);margin:0 0 1rem">
+        <div style="display:flex;justify-content:space-between;font-weight:700">
+          <span>Total</span><span id="eTotal">₱0.00</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">${r ? 'Save changes' : 'Add entry'}</button>
+    </form>`);
 
-        function populateYearFilter() {
-            const currentYear = new Date().getFullYear();
-            const yearSelect = document.getElementById('yearFilter');
-            const reportYear = document.getElementById('reportYear');
-            
-            for (let y = currentYear; y >= 2020; y--) {
-                const opt1 = document.createElement('option');
-                opt1.value = y;
-                opt1.textContent = y;
-                yearSelect.appendChild(opt1);
-                
-                const opt2 = document.createElement('option');
-                opt2.value = y;
-                opt2.textContent = y;
-                reportYear.appendChild(opt2);
-            }
-        }
+  const calc = () => {
+    const total = (parseFloat($('#eLiters').value) || 0) * (parseFloat($('#ePrice').value) || 0);
+    $('#eTotal').textContent = peso(total);
+  };
+  $('#eLiters').oninput = calc;
+  $('#ePrice').oninput = calc;
+  $('#eDriver').onchange = () => {
+    const sel = driverById($('#eDriver').value);
+    if (sel && !r) $('#ePrice').value = sel.defaultPrice || 60;
+    calc();
+  };
+  calc();
 
-        function formatCurrency(amount) {
-            return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+  $('#entryForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const payload = {
+      driverId: Number($('#eDriver').value),
+      date: $('#eDate').value,
+      liters: parseFloat($('#eLiters').value),
+      pricePerLiter: parseFloat($('#ePrice').value),
+      odometer: parseFloat($('#eOdo').value) || 0,
+    };
+    try {
+      await api(r ? `/api/records/${r.id}` : '/api/records', {
+        method: r ? 'PUT' : 'POST', body: JSON.stringify(payload),
+      });
+      toast(r ? 'Entry updated' : 'Entry added', 'ok');
+      closeModal();
+      await loadData();
+      render(state.page);
+    } catch (e) { toast(e.message, 'err'); }
+  };
+}
 
-        function renderDashboard() {
-            const now = new Date();
-            const thisMonth = records.filter(r => {
-                const d = new Date(r.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
+function openDriverModal(id = null) {
+  const d = id ? driverById(id) : null;
+  openModal(d ? 'Edit driver' : 'Add driver', `
+    <form id="driverForm">
+      <div class="form-group"><label for="dName">Driver name</label>
+        <input id="dName" value="${d ? esc(d.name) : ''}" required maxlength="120"></div>
+      <div class="form-2">
+        <div class="form-group"><label for="dVehicle">Vehicle</label>
+          <input id="dVehicle" value="${d ? esc(d.vehicle) : ''}" placeholder="Isuzu Elf 4WD2" required maxlength="120"></div>
+        <div class="form-group"><label for="dPlate">Plate number</label>
+          <input id="dPlate" value="${d ? esc(d.plate || '') : ''}" placeholder="NCR 8452" maxlength="32"></div>
+      </div>
+      <div class="form-2">
+        <div class="form-group"><label for="dFuel">Fuel type</label>
+          <select id="dFuel"><option value="diesel"${d && d.fuelType === 'diesel' ? ' selected' : ''}>Diesel</option>
+          <option value="petrol"${d && d.fuelType === 'petrol' ? ' selected' : ''}>Petrol</option></select></div>
+        <div class="form-group"><label for="dRate">Rated consumption (km/L)</label>
+          <input type="number" id="dRate" min="0" max="100" step="0.1" value="${d ? d.consumptionRate : ''}" required>
+          <div class="hint">Manufacturer figure – actual is measured from odometer</div></div>
+      </div>
+      <div class="form-group"><label for="dPrice">Default price per litre (₱)</label>
+        <input type="number" id="dPrice" min="0" max="10000" step="0.01" value="${d ? d.defaultPrice : '68.00'}" required>
+        <div class="hint">Pre-fills new entries; edit per fill-up when the price changes</div></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">${d ? 'Save driver' : 'Add driver'}</button>
+    </form>`);
 
-            const totalLiters = thisMonth.reduce((sum, r) => sum + r.liters, 0);
-            const totalCost = thisMonth.reduce((sum, r) => sum + r.total, 0);
-            
-            document.getElementById('totalLiters').textContent = totalLiters.toFixed(1);
-            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
-            document.getElementById('totalRecords').textContent = thisMonth.length;
+  $('#driverForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const payload = {
+      name: $('#dName').value, vehicle: $('#dVehicle').value, plate: $('#dPlate').value,
+      fuelType: $('#dFuel').value, consumptionRate: parseFloat($('#dRate').value),
+      defaultPrice: parseFloat($('#dPrice').value),
+    };
+    try {
+      await api(d ? `/api/drivers/${d.id}` : '/api/drivers', {
+        method: d ? 'PUT' : 'POST', body: JSON.stringify(payload),
+      });
+      toast(d ? 'Driver updated' : 'Driver added', 'ok');
+      closeModal();
+      await loadData();
+      render(state.page);
+    } catch (e) { toast(e.message, 'err'); }
+  };
+}
 
-            let totalKm = 0;
-            thisMonth.forEach(r => {
-                const driver = drivers.find(d => d.id === r.driverId);
-                if (driver && driver.consumptionRate > 0) {
-                    totalKm += r.liters * driver.consumptionRate;
-                }
-            });
-            const avgCons = totalLiters > 0 ? (totalKm / totalLiters).toFixed(1) : '0';
-            document.getElementById('avgConsumption').textContent = avgCons;
+function openUserModal(id = null) {
+  const u = id ? state.users.find((x) => x.id === id) : null;
+  openModal(u ? 'Edit user' : 'Add user', `
+    <form id="userForm">
+      <div class="form-group"><label for="uName">Username</label>
+        <input id="uName" value="${u ? esc(u.username) : ''}" ${u ? 'disabled' : ''} required
+               pattern="[A-Za-z0-9._-]{3,64}" autocomplete="off">
+        ${u ? '' : '<div class="hint">Letters, numbers, dot, dash, underscore</div>'}</div>
+      <div class="form-group"><label for="uPass">${u ? 'New password' : 'Password'}</label>
+        <input type="password" id="uPass" ${u ? 'placeholder="Leave empty to keep current"' : ''} minlength="8" autocomplete="new-password" ${u ? '' : 'required'}>
+        <div class="hint">Minimum 8 characters</div></div>
+      <div class="form-2">
+        <div class="form-group"><label for="uRole">Role</label>
+          <select id="uRole">
+            <option value="viewer"${u && u.role === 'viewer' ? ' selected' : ''}>Viewer – read only</option>
+            <option value="manager"${u && u.role === 'manager' ? ' selected' : ''}>Manager – can add and edit</option>
+            <option value="driver"${u && u.role === 'driver' ? ' selected' : ''}>Driver – own records only</option>
+            <option value="admin"${u && u.role === 'admin' ? ' selected' : ''}>Admin – full control</option>
+          </select></div>
+        <div class="form-group" id="uDriverWrap" ${u && u.role === 'driver' ? '' : 'hidden'}><label for="uDriver">Linked driver</label>
+          <select id="uDriver">${driverOptions(u ? u.driverId : '')}</select>
+          <div class="hint">Driver sees only their own fill-ups</div></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">${u ? 'Save user' : 'Create user'}</button>
+    </form>`);
 
-            const recentDiv = document.getElementById('recentEntries');
-            if (thisMonth.length === 0) {
-                recentDiv.innerHTML = '<div class="empty-state">No entries this month</div>';
-            } else {
-                recentDiv.innerHTML = thisMonth.slice(0, 5).map(r => {
-                    const driver = drivers.find(d => d.id === r.driverId);
-                    return `<div class="record-item">
-                        <div>
-                            <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
-                            <div class="record-driver">${driver ? driver.name : 'Unknown'}</div>
-                        </div>
-                        <div class="record-amount">${r.liters}L - ${formatCurrency(r.total)}</div>
-                    </div>`;
-                }).join('');
-            }
-        }
+  $('#uRole').onchange = () => { $('#uDriverWrap').hidden = $('#uRole').value !== 'driver'; };
 
-        function renderDrivers() {
-            const div = document.getElementById('driversList');
-            if (drivers.length === 0) {
-                div.innerHTML = '<div class="empty-state">No drivers yet. Add one!</div>';
-                return;
-            }
-            
-            div.innerHTML = drivers.map(d => {
-                return `<div class="driver-card">
-                    <div class="driver-info">
-                        <h3>${d.name}</h3>
-                        <p>${d.vehicle} (${d.plate})</p>
-                    </div>
-                    <div class="driver-rate">
-                        <div class="rate">${d.consumptionRate} km/L</div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary)">₱${d.defaultPrice || 60}/L</div>
-                        <span class="fuel-type ${d.fuelType}">${d.fuelType}</span>
-                    </div>
-                </div>
-                <div class="action-row">
-                    <button class="edit-btn" onclick="editDriver(${d.id})">Edit</button>
-                    <button class="edit-btn" onclick="showDriverReport(${d.id})">Report</button>
-                    <button class="delete-btn" onclick="deleteDriver(${d.id})">Delete</button>
-                </div>`;
-            }).join('');
-        }
+  $('#userForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const role = $('#uRole').value;
+    const payload = {
+      role,
+      driverId: role === 'driver' ? Number($('#uDriver').value) : null,
+    };
+    if ($('#uPass').value) payload.password = $('#uPass').value;
+    try {
+      if (u) {
+        await api(`/api/users/${u.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await api('/api/users', { method: 'POST', body: JSON.stringify({ ...payload, username: $('#uName').value, password: $('#uPass').value }) });
+      }
+      toast(u ? 'User updated' : 'User created', 'ok');
+      closeModal();
+      await loadData();
+      render(state.page);
+    } catch (e) { toast(e.message, 'err'); }
+  };
+}
 
-        function showDriverReport(driverId) {
-            const driver = drivers.find(d => d.id === driverId);
-            const year = document.getElementById('reportYear').value;
-            const yearRecords = records.filter(r => r.driverId === driverId && new Date(r.date).getFullYear() == year);
-            
-            const totalLiters = yearRecords.reduce((sum, r) => sum + r.liters, 0);
-            const totalCost = yearRecords.reduce((sum, r) => sum + r.total, 0);
-            
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `
-                <div style="text-align:center;">
-                    <h3>${driver.name}</h3>
-                    <p>${driver.vehicle} (${driver.plate})</p>
-                    <hr style="margin:1rem 0;border-color:var(--border);">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                        <div class="stat-item">
-                            <div class="stat-value">${totalLiters.toFixed(1)}L</div>
-                            <div class="stat-label">Total Fuel</div>
-                        </div>
-                        <div class="stat-item amber">
-                            <div class="stat-value">₱${totalCost.toFixed(2)}</div>
-                            <div class="stat-label">Total Cost</div>
-                        </div>
-                    </div>
-                    <div style="margin-top:1rem;text-align:left;">
-                        <h4 style="margin-bottom:0.5rem;">${year} Records:</h4>
-                        ${yearRecords.length === 0 ? '<p>No records</p>' : yearRecords.map(r => `
-                            <div style="padding:0.5rem;border-bottom:1px solid var(--border);">
-                                <div style="font-size:0.875rem;">${new Date(r.date).toLocaleDateString('en-PH')}</div>
-                                <div>${r.liters}L @ ₱${r.pricePerLiter}/L = ₱${r.total.toFixed(2)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('modalTitle').textContent = driver.name + ' Report';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
+/* ------------------------------------------------------------------ export */
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
 
-        function renderRecords() {
-            const yearFilter = document.getElementById('yearFilter').value;
-            const driverFilter = document.getElementById('driverFilter').value;
-            
-            let filtered = records;
-            if (yearFilter !== 'all') {
-                filtered = filtered.filter(r => new Date(r.date).getFullYear() == yearFilter);
-            }
-            if (driverFilter !== 'all') {
-                filtered = filtered.filter(r => r.driverId == driverFilter);
-            }
-            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+function exportCSV(list) {
+  const esc2 = (v) => `"${String(v === null || v === undefined ? '' : v).replace(/"/g, '""')}"`;
+  const head = ['Date', 'Driver', 'Vehicle', 'Plate', 'Litres', 'Price per litre', 'Total PHP', 'Odometer km'];
+  const rows = list.map((r) => {
+    const d = driverById(r.driverId);
+    return [r.date, d ? d.name : 'Unassigned', d ? d.vehicle : '', d ? d.plate || '' : '',
+      r.liters, r.pricePerLiter, r.total, r.odometer].map(esc2).join(',');
+  });
+  // BOM so Excel opens the peso/UTF-8 content correctly.
+  downloadBlob(new Blob(['﻿' + [head.map(esc2).join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' }),
+    `fuel_records_${state.year}.csv`);
+  toast('CSV downloaded', 'ok');
+}
 
-            const driverSelect = document.getElementById('driverFilter');
-            driverSelect.innerHTML = '<option value="all">All Drivers</option>';
-            drivers.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
-                driverSelect.appendChild(opt);
-            });
-            if (driverFilter !== 'all') driverSelect.value = driverFilter;
+async function exportPDF(list) {
+  if (!window.jspdf) { toast('PDF library unavailable offline', 'err'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 42;
 
-            const div = document.getElementById('recordsList');
-            if (filtered.length === 0) {
-                div.innerHTML = '<div class="empty-state">No records found</div>';
-                return;
-            }
+  doc.setFillColor(30, 58, 95);
+  doc.rect(0, 0, W, 74, 'F');
+  doc.setTextColor(255, 255, 255).setFontSize(17).setFont('helvetica', 'bold');
+  doc.text('Driver Ledger PH', M, 33);
+  doc.setFontSize(10).setFont('helvetica', 'normal');
+  doc.text(`Fuel expenditure report — ${state.year === 'all' ? 'All time' : state.year}`, M, 51);
+  doc.setFontSize(8);
+  doc.text(`Generated ${new Date().toLocaleDateString('en-PH')}`, W - M, 51, { align: 'right' });
 
-            div.innerHTML = filtered.map(r => {
-                const driver = drivers.find(d => d.id === r.driverId);
-                const canEdit = currentUser.role === 'admin' || currentUser.role === 'manager';
-                return `<div class="record-item">
-                    <div>
-                        <div class="record-date">${new Date(r.date).toLocaleDateString('en-PH')}</div>
-                        <div class="record-driver">${driver ? driver.name : 'Unknown'}</div>
-                        <div>${r.liters}L @ ${formatCurrency(r.pricePerLiter)}/L</div>
-                    </div>
-                    <div>
-                        <div class="record-amount">${formatCurrency(r.total)}</div>
-                        ${canEdit ? `<div class="action-row" style="margin-top:0.25rem;justify-content:flex-end;">
-                            <button class="edit-btn" onclick="editRecord(${r.id})">Edit</button>
-                            <button class="delete-btn" onclick="deleteRecord(${r.id})">Delete</button>
-                        </div>` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-        }
+  let y = 104;
+  const cols = [
+    { label: 'Date', w: 70, get: (r) => r.date },
+    { label: 'Driver', w: 120, get: (r) => { const d = driverById(r.driverId); return d ? d.name : '—'; } },
+    { label: 'Litres', w: 55, get: (r) => num(r.liters), align: 'right' },
+    { label: '₱/L', w: 58, get: (r) => Number(r.pricePerLiter).toFixed(2), align: 'right' },
+    { label: 'Total', w: 72, get: (r) => Number(r.total).toFixed(2), align: 'right' },
+    { label: 'Odo', w: 60, get: (r) => (r.odometer ? num(r.odometer, 0) : '—'), align: 'right' },
+  ];
 
-        function editRecord(id) {
-            const record = records.find(r => r.id === id);
-            if (!record) return;
+  const header = () => {
+    doc.setFontSize(7.5).setFont('helvetica', 'bold').setTextColor(110);
+    let x = M;
+    cols.forEach((c) => {
+      doc.text(c.label.toUpperCase(), c.align === 'right' ? x + c.w - 4 : x, y, { align: c.align || 'left' });
+      x += c.w;
+    });
+    y += 5;
+    doc.setDrawColor(200).line(M, y, W - M, y);
+    y += 13;
+    doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(20);
+  };
+  header();
 
-            const driver = drivers.find(d => d.id === record.driverId);
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<form id="editRecordForm">
-                <div class="form-group">
-                    <label>Driver</label>
-                    <select id="editRecDriver" required>${drivers.map(d => `<option value="${d.id}" ${d.id === record.driverId ? 'selected' : ''}>${d.name}</option>`).join('')}</select>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="editRecDate" value="${record.date}" required>
-                </div>
-                <div class="form-group">
-                    <label>Liters</label>
-                    <input type="number" step="0.01" id="editRecLiters" value="${record.liters}" required>
-                </div>
-                <div class="form-group">
-                    <label>Price per Liter (PHP)</label>
-                    <input type="number" step="0.01" id="editRecPrice" value="${record.pricePerLiter}" required>
-                </div>
-                <div class="form-group">
-                    <label>Odometer (km)</label>
-                    <input type="number" id="editRecOdometer" value="${record.odometer}">
-                </div>
-                <button type="submit" class="btn btn-primary">Update Record</button>
-            </form>`;
-            
-            document.getElementById('editRecordForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const driverId = parseInt(document.getElementById('editRecDriver').value);
-                const date = document.getElementById('editRecDate').value;
-                const liters = parseFloat(document.getElementById('editRecLiters').value);
-                const pricePerLiter = parseFloat(document.getElementById('editRecPrice').value);
-                const odometer = parseFloat(document.getElementById('editRecOdometer').value) || 0;
-                
-                await apiCall('/api/records/' + id, {
-                    method: 'PUT',
-                    body: JSON.stringify({ driverId, date, liters, pricePerLiter, odometer })
-                });
-                
-                records = await apiCall('/api/records');
-                closeModal();
-                renderDashboard();
-                renderRecords();
-            };
-            
-            document.getElementById('modalTitle').textContent = 'Edit Fuel Record';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
+  list.forEach((r) => {
+    if (y > H - 70) {
+      doc.addPage();
+      y = 60;
+      header();
+    }
+    let x = M;
+    cols.forEach((c) => {
+      doc.text(String(c.get(r)), c.align === 'right' ? x + c.w - 4 : x, y, { align: c.align || 'left' });
+      x += c.w;
+    });
+    y += 16;
+  });
 
-        async function deleteRecord(id) {
-            if (confirm('Delete this fuel record?')) {
-                await apiCall('/api/records/' + id, { method: 'DELETE' });
-                records = await apiCall('/api/records');
-                renderDashboard();
-                renderRecords();
-            }
-        }
+  const tl = list.reduce((a, r) => a + r.liters, 0);
+  const tc = list.reduce((a, r) => a + r.total, 0);
+  if (y > H - 90) { doc.addPage(); y = 60; }
+  y += 10;
+  doc.setDrawColor(30, 58, 95).setLineWidth(1).line(M, y, W - M, y);
+  doc.setLineWidth(0.4);
+  y += 20;
+  doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(30, 58, 95);
+  doc.text(`Total litres: ${num(tl)}`, M, y);
+  doc.text(`Total cost: ₱${tc.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, M + 230, y);
 
-        function renderUsers() {
-            const div = document.getElementById('usersList');
-            div.innerHTML = users.map(u => {
-                const driver = drivers.find(d => d.id === u.driverId);
-                return `<div class="user-list-item">
-                <div>
-                    <strong>${u.username}</strong>
-                    <span class="badge badge-${u.role}">${u.role}</span>
-                    ${driver ? `<span style="font-size:0.75rem;color:var(--text-secondary)">→ ${driver.name}</span>` : ''}
-                </div>
-                <div class="action-row" style="margin:0;">
-                    <button class="edit-btn" onclick="editUser('${u.username}')">Edit</button>
-                    ${u.username !== 'admin' ? `<button class="delete-btn" onclick="deleteUser('${u.username}')">Delete</button>` : ''}
-                </div>
-            </div>`;
-            }).join('');
-        }
+  doc.save(`fuel_report_${state.year}.pdf`);
+  toast('PDF downloaded', 'ok');
+}
 
-        function editUser(username) {
-            const user = users.find(u => u.username === username);
-            if (!user) return;
+/* ------------------------------------------------------------------ theme */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('dl_theme', t);
+  const dark = t === 'dark';
+  $('#themeBtnTop').textContent = dark ? '☀️' : '🌙';
+  $('#themeBtnSide').textContent = dark ? '☀️ Light' : '🌙 Dark';
+  document.querySelector('meta[name=theme-color]').setAttribute('content', dark ? '#0F172A' : '#1E3A5F');
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
 
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<form id="editUserForm">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="editUserUsername" value="${user.username}" disabled style="background:var(--bg);opacity:0.7;">
-                </div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="editUserPassword" placeholder="Leave empty to keep current">
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select id="editUserRole">
-                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                        <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option>
-                        <option value="driver" ${user.role === 'driver' ? 'selected' : ''}>Driver</option>
-                    </select>
-                </div>
-                <div class="form-group" id="editDriverGroup" style="display:${user.role === 'driver' ? 'block' : 'none'};">
-                    <label>Assign to Driver</label>
-                    <select id="editUserDriver">
-                        ${drivers.map(d => `<option value="${d.id}" ${user.driverId === d.id ? 'selected' : ''}>${d.name} - ${d.plate}</option>`).join('')}
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Update User</button>
-            </form>`;
-            
-            document.getElementById('editUserRole').onchange = function() {
-                document.getElementById('editDriverGroup').style.display = this.value === 'driver' ? 'block' : 'none';
-            };
-            
-            document.getElementById('editUserForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const newPassword = document.getElementById('editUserPassword').value;
-                const role = document.getElementById('editUserRole').value;
-                const driverId = role === 'driver' ? parseInt(document.getElementById('editUserDriver').value) : null;
-                
-                const updates = { role, driverId };
-                if (newPassword) updates.password = newPassword;
-                
-                await apiCall('/api/users/' + username, {
-                    method: 'PUT',
-                    body: JSON.stringify(updates)
-                });
-                
-                users = await apiCall('/api/users');
-                closeModal();
-                renderUsers();
-            };
-            
-            document.getElementById('modalTitle').textContent = 'Edit User';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
+/* ------------------------------------------------------------------ auth */
+function logout(silent) {
+  state.token = null; state.user = null;
+  localStorage.removeItem('dl_token'); localStorage.removeItem('dl_user');
+  if (!silent) api('/api/logout', { method: 'POST' }).catch(() => {});
+  showLogin();
+  if (!silent) toast('Signed out');
+}
 
-        function showAddEntryModal() {
-            const availableDrivers = drivers;
-                
-            if (availableDrivers.length === 0) {
-                alert('Please add a driver first!');
-                return;
-            }
+function showLogin() {
+  $('#shell').hidden = true;
+  $('#login').hidden = false;
+  $('#lgUser').focus();
+}
 
-            const selectedDriverId = availableDrivers[0].id;
-            const defaultPrice = availableDrivers[0].defaultPrice || 60;
-                
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<form id="entryForm">
-                <div class="form-group">
-                    <label>Driver</label>
-                    <select id="entryDriver" required onchange="updateDefaultPrice()">${availableDrivers.map(d => `<option value="${d.id}" data-price="${d.defaultPrice || 60}">${d.name}</option>`).join('')}</select>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="entryDate" required>
-                </div>
-                <div class="form-group">
-                    <label>Liters</label>
-                    <input type="number" step="0.01" id="entryLiters" required>
-                </div>
-                <div class="form-group">
-                    <label>Price per Liter (PHP)</label>
-                    <input type="number" step="0.01" id="entryPrice" value="${defaultPrice}">
-                    <small style="color:var(--text-secondary)">Auto-filled from driver settings. Edit when price changes.</small>
-                </div>
-                <div class="form-group">
-                    <label>Odometer (km)</label>
-                    <input type="number" id="entryOdometer">
-                </div>
-                <button type="submit" class="btn btn-primary">Save Entry</button>
-            </form>`;
-            
-            document.getElementById('entryDate').valueAsDate = new Date();
-            
-            window.updateDefaultPrice = function() {
-                const select = document.getElementById('entryDriver');
-                const price = select.options[select.selectedIndex].dataset.price;
-                document.getElementById('entryPrice').value = price;
-            };
-            
-            document.getElementById('entryForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const driverId = parseInt(document.getElementById('entryDriver').value);
-                const date = document.getElementById('entryDate').value;
-                const liters = parseFloat(document.getElementById('entryLiters').value);
-                const pricePerLiter = parseFloat(document.getElementById('entryPrice').value);
-                const odometer = parseFloat(document.getElementById('entryOdometer').value) || 0;
-                
-                await apiCall('/api/records', {
-                    method: 'POST',
-                    body: JSON.stringify({ driverId, date, liters, pricePerLiter, odometer })
-                });
-                
-                records = await apiCall('/api/records');
-                closeModal();
-                if (currentUser.role === 'driver') {
-                    showDriverView();
-                } else {
-                    renderDashboard();
-                    renderRecords();
-                }
-            };
-            
-            document.getElementById('modalTitle').textContent = 'Add Fuel Entry';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
+async function showApp() {
+  $('#login').hidden = true;
+  $('#shell').hidden = false;
+  await loadData();
+  go('dashboard');
+}
 
-        function showDriverModal(driver = null) {
-            const content = document.getElementById('modalContent');
-            const isEdit = driver !== null;
-            
-            content.innerHTML = `<form id="driverForm">
-                <div class="form-group">
-                    <label>Driver Name</label>
-                    <input type="text" id="driverName" required value="${driver ? driver.name : ''}">
-                </div>
-                <div class="form-group">
-                    <label>Vehicle Model</label>
-                    <input type="text" id="driverVehicle" required value="${driver ? driver.vehicle : ''}">
-                </div>
-                <div class="form-group">
-                    <label>Plate Number</label>
-                    <input type="text" id="driverPlate" required value="${driver ? driver.plate : ''}">
-                </div>
-                <div class="form-group">
-                    <label>Fuel Type</label>
-                    <select id="driverFuelType">
-                        <option value="petrol" ${driver && driver.fuelType === 'petrol' ? 'selected' : ''}>Petrol</option>
-                        <option value="diesel" ${driver && driver.fuelType === 'diesel' ? 'selected' : ''}>Diesel</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Consumption Rate (km/L)</label>
-                    <input type="number" step="0.1" id="driverConsumption" required value="${driver ? driver.consumptionRate : ''}">
-                </div>
-                <div class="form-group">
-                    <label>Default Fuel Price (PHP/Liter)</label>
-                    <input type="number" step="0.01" id="driverDefaultPrice" required value="${driver ? driver.defaultPrice : '60.00'}">
-                    <small style="color:var(--text-secondary)">Update this when fuel price changes daily</small>
-                </div>
-                <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Add'} Driver</button>
-            </form>`;
-            
-            document.getElementById('driverForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const name = document.getElementById('driverName').value;
-                const vehicle = document.getElementById('driverVehicle').value;
-                const plate = document.getElementById('driverPlate').value;
-                const fuelType = document.getElementById('driverFuelType').value;
-                const consumptionRate = parseFloat(document.getElementById('driverConsumption').value);
-                const defaultPrice = parseFloat(document.getElementById('driverDefaultPrice').value);
-                
-                if (isEdit) {
-                    await apiCall('/api/drivers/' + driver.id, {
-                        method: 'PUT',
-                        body: JSON.stringify({ name, vehicle, plate, fuelType, consumptionRate, defaultPrice })
-                    });
-                } else {
-                    await apiCall('/api/drivers', {
-                        method: 'POST',
-                        body: JSON.stringify({ name, vehicle, plate, fuelType, consumptionRate, defaultPrice })
-                    });
-                }
-                
-                drivers = await apiCall('/api/drivers');
-                closeModal();
-                renderDrivers();
-                renderRecords();
-            };
-            
-            document.getElementById('modalTitle').textContent = isEdit ? 'Edit Driver' : 'Add Driver';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
+$('#loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const res = await api('/api/login', { method: 'POST', body: JSON.stringify({
+      username: $('#lgUser').value, password: $('#lgPass').value,
+    }) });
+    state.token = res.token; state.user = res.user;
+    localStorage.setItem('dl_token', res.token);
+    localStorage.setItem('dl_user', JSON.stringify(res.user));
+    await showApp();
+  } catch (err) {
+    toast(err.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+};
 
-        function editDriver(id) {
-            const driver = drivers.find(d => d.id === id);
-            showDriverModal(driver);
-        }
+$('#modalClose').onclick = closeModal;
+$('#overlay').onclick = (e) => { if (e.target === $('#overlay')) closeModal(); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+$('#themeBtnTop').onclick = toggleTheme;
+$('#themeBtnSide').onclick = toggleTheme;
+$('#logoutBtnTop').onclick = () => logout();
+$('#logoutBtnSide').onclick = () => logout();
+$('#fab').onclick = () => openEntryModal();
 
-        async function deleteDriver(id) {
-            if (confirm('Delete this driver?')) {
-                await apiCall('/api/drivers/' + id, { method: 'DELETE' });
-                drivers = await apiCall('/api/drivers');
-                renderDrivers();
-            }
-        }
+document.addEventListener('click', (e) => {
+  const nav = e.target.closest('[data-nav]');
+  if (nav) { go(nav.dataset.nav); }
+});
 
-        function showAddUserModal() {
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<form id="newUserForm">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="newUserUsername" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="newUserPassword" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select id="newUserRole" onchange="toggleDriverSelect()">
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
-                        <option value="driver">Driver</option>
-                    </select>
-                </div>
-                <div class="form-group" id="driverSelectGroup" style="display:none;">
-                    <label>Assign to Driver</label>
-                    <select id="newUserDriver">
-                        ${drivers.map(d => `<option value="${d.id}">${d.name} - ${d.plate}</option>`).join('')}
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Create User</button>
-            </form>`;
-            
-            document.getElementById('newUserForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const username = document.getElementById('newUserUsername').value;
-                const password = document.getElementById('newUserPassword').value;
-                const role = document.getElementById('newUserRole').value;
-                const driverId = role === 'driver' ? parseInt(document.getElementById('newUserDriver').value) : null;
-                
-                const result = await apiCall('/api/users', {
-                    method: 'POST',
-                    body: JSON.stringify({ username, password, role, driverId })
-                });
-                
-                if (result.success) {
-                    users = await apiCall('/api/users');
-                    closeModal();
-                    renderUsers();
-                } else {
-                    alert(result.error || 'Username already exists');
-                }
-            };
-            
-            document.getElementById('modalTitle').textContent = 'Add User';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
-
-        function toggleDriverSelect() {
-            const role = document.getElementById('newUserRole').value;
-            document.getElementById('driverSelectGroup').style.display = role === 'driver' ? 'block' : 'none';
-        }
-
-        async function deleteUser(username) {
-            if (confirm('Delete user ' + username + '?')) {
-                await apiCall('/api/users/' + username, { method: 'DELETE' });
-                users = await apiCall('/api/users');
-                renderUsers();
-            }
-        }
-
-        function showUserModal() {
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<div style="text-align:center;">
-                <p>Logged in as: <strong>${currentUser.username}</strong></p>
-                <p>Role: <span class="badge badge-${currentUser.role}">${currentUser.role}</span></p>
-                <button class="btn btn-danger" onclick="logout()">Logout</button>
-            </div>`;
-            
-            document.getElementById('modalTitle').textContent = 'User Info';
-            document.getElementById('modalOverlay').classList.add('active');
-        }
-
-        function generateReport() {
-            const year = document.getElementById('reportYear').value;
-            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
-            
-            let html = '';
-            let grandTotalLiters = 0;
-            let grandTotalCost = 0;
-            
-            drivers.forEach(driver => {
-                const driverRecords = yearRecords.filter(r => r.driverId === driver.id);
-                if (driverRecords.length === 0) return;
-                
-                const totalLiters = driverRecords.reduce((sum, r) => sum + r.liters, 0);
-                const totalCost = driverRecords.reduce((sum, r) => sum + r.total, 0);
-                
-                grandTotalLiters += totalLiters;
-                grandTotalCost += totalCost;
-                
-                html += `<div class="report-driver">
-                    <h3>${driver.name}</h3>
-                    <p>${driver.vehicle} (${driver.plate})</p>
-                    <p><strong>${totalLiters.toFixed(1)}L</strong> @ ${formatCurrency(totalCost)}</p>
-                </div>`;
-            });
-            
-            if (grandTotalLiters === 0) {
-                html = '<div class="empty-state">No records for this year</div>';
-            } else {
-                html += `<div class="report-total">
-                    <span>Grand Total (${year})</span>
-                    <span>${grandTotalLiters.toFixed(1)}L - ${formatCurrency(grandTotalCost)}</span>
-                </div>`;
-            }
-            
-            document.getElementById('reportContent').innerHTML = html;
-        }
-
-        function exportCSV() {
-            const year = document.getElementById('reportYear').value;
-            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
-            
-            let csv = 'Date,Driver,Vehicle,Liters,Price/L,Total,Odometer\n';
-            
-            yearRecords.forEach(r => {
-                const driver = drivers.find(d => d.id === r.driverId);
-                csv += `${r.date},"${driver ? driver.name : ''}","${driver ? driver.vehicle : ''}",${r.liters},${r.pricePerLiter},${r.total},${r.odometer}\n`;
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `fuel_report_${year}.csv`;
-            a.click();
-        }
-
-        function exportPDF() {
-            const year = document.getElementById('reportYear').value;
-            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(18);
-            doc.setTextColor(30, 58, 95);
-            doc.text('Driver Ledger PH - Fuel Report', 105, 20, { align: 'center' });
-            
-            doc.setFontSize(12);
-            doc.setTextColor(100);
-            doc.text(`Year: ${year}`, 14, 30);
-            doc.text(`Generated: ${new Date().toLocaleDateString('en-PH')}`, 14, 36);
-            
-            let y = 50;
-            let totalLiters = 0;
-            let totalCost = 0;
-            
-            doc.setFontSize(14);
-            doc.setTextColor(30, 58, 95);
-            doc.text('Fuel Records', 14, y);
-            y += 10;
-            
-            doc.setFontSize(10);
-            doc.setTextColor(0);
-            
-            yearRecords.forEach(r => {
-                const driver = drivers.find(d => d.id === r.driverId);
-                totalLiters += r.liters;
-                totalCost += r.total;
-                
-                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ PHP${r.pricePerLiter}/L | PHP${r.total.toFixed(2)}`, 14, y);
-                y += 7;
-                
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-            });
-            
-            y += 5;
-            doc.setDrawColor(200);
-            doc.line(14, y, 196, y);
-            y += 10;
-            
-            doc.setFontSize(12);
-            doc.setTextColor(30, 58, 95);
-            doc.text(`Total Liters: ${totalLiters.toFixed(1)}L`, 14, y);
-            doc.text(`Total Cost: ₱${totalCost.toFixed(2)}`, 14, y + 7);
-            
-            doc.save(`fuel_report_${year}.pdf`);
-        }
-
-        function sharePDF() {
-            const year = document.getElementById('reportYear').value;
-            const yearRecords = records.filter(r => new Date(r.date).getFullYear() == year);
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(18);
-            doc.setTextColor(30, 58, 95);
-            doc.text('Driver Ledger PH - Fuel Report', 105, 20, { align: 'center' });
-            
-            doc.setFontSize(12);
-            doc.setTextColor(100);
-            doc.text(`Year: ${year}`, 14, 30);
-            doc.text(`Generated: ${new Date().toLocaleDateString('en-PH')}`, 14, 36);
-            
-            let y = 50;
-            let totalLiters = 0;
-            let totalCost = 0;
-            
-            doc.setFontSize(14);
-            doc.setTextColor(30, 58, 95);
-            doc.text('Fuel Records', 14, y);
-            y += 10;
-            
-            doc.setFontSize(10);
-            doc.setTextColor(0);
-            
-            yearRecords.forEach(r => {
-                const driver = drivers.find(d => d.id === r.driverId);
-                totalLiters += r.liters;
-                totalCost += r.total;
-                doc.text(`${r.date} | ${driver ? driver.name : 'Unknown'} | ${r.liters}L @ PHP${r.pricePerLiter}/L | PHP${r.total.toFixed(2)}`, 14, y);
-                y += 7;
-                if (y > 270) { doc.addPage(); y = 20; }
-            });
-            
-            y += 5;
-            doc.line(14, y, 196, y);
-            y += 10;
-            doc.setFontSize(12);
-            doc.setTextColor(30, 58, 95);
-            doc.text(`Total Liters: ${totalLiters.toFixed(1)}L`, 14, y);
-            doc.text(`Total Cost: PHP${totalCost.toFixed(2)}`, 14, y + 7);
-            
-            const pdfBlob = doc.output('blob');
-            const file = new File([pdfBlob], `fuel_report_${year}.pdf`, { type: 'application/pdf' });
-            
-            if (navigator.share && navigator.canShare({ files: [new File([file], `fuel_report_${year}.pdf`, { type: 'application/pdf' })] })) {
-                navigator.share({
-                    files: [new File([pdfBlob], `fuel_report_${year}.pdf`, { type: 'application/pdf' })]
-                }).catch(() => { doc.save(`fuel_report_${year}.pdf`); });
-            } else {
-                doc.save(`fuel_report_${year}.pdf`);
-            }
-        }
-
-        async function exportBackup() {
-            window.open(API + '/api/backup', '_blank');
-        }
-
-        async function importBackup(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            if (!confirm('This will replace all current data. Continue?')) return;
-            
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    await apiCall('/api/restore', {
-                        method: 'POST',
-                        body: JSON.stringify(data)
-                    });
-                    await loadData();
-                    renderDashboard();
-                    renderDrivers();
-                    renderRecords();
-                    renderUsers();
-                    alert('Backup restored successfully!');
-                } catch (err) {
-                    alert('Invalid backup file');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
-        }
-
-        document.getElementById('modalOverlay').onclick = function(e) {
-            if (e.target === this) closeModal();
-        };
-
-        init();
-    </script>
+(async function boot() {
+  applyTheme(localStorage.getItem('dl_theme') || 'light');
+  if (state.token && state.user) {
+    try {
+      await showApp();
+      return;
+    } catch (e) { /* fall through to login */ }
+  }
+  showLogin();
+  try {
+    const h = await fetch('/api/health').then((r) => r.json());
+    if (h.counts && h.counts.users > 0) $('#demoNote').hidden = false;
+  } catch { /* offline is fine, login still works */ }
+})();
+</script>
 </body>
 </html>

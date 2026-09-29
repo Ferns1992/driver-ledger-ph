@@ -1,0 +1,18 @@
+# Overlay for hosting behind an existing cloudflared container.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+#
+# Attaches the app to the cloudflared network so the tunnel can reach it by
+# container name. No host port is published for tunnel traffic, so the app is
+# not exposed to the internet at all.
+services:
+  driver-ledger:
+    networks:
+      - cloudflared
+    # Drop the loopback publish: the tunnel talks to the container directly.
+    ports: !reset []
+
+networks:
+  cloudflared:
+    external: true
+    name: cloudflared_default
