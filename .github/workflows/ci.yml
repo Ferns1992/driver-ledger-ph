@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Adds a 'Run workflow' button on the Actions tab, so a pipeline can be
+  # started by hand without pushing an empty commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Boot and exercise the API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Parse the server and the seed script
+        run: |
+          set -euo pipefail
+          node --check server.js
+          node --check seed.js
+
+      # Booting runs initDB() and creates the schema, so a broken migration or a
+      # bad query fails here rather than in production. /api/health then proves
+      # the tables exist, since it counts rows in drivers, records and users.
+      - name: Boot and assert the database initialises
+        run: |
+          set -euo pipefail
+          export PORT=4090
+          export DB_PATH="$RUNNER_TEMP/ci-ledger.db"
+          export ADMIN_PASSWORD="CiAdminPass123!"
+          node server.js > server.log 2>&1 &
+          trap 'kill %1 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if body=$(curl -fsS "http://127.0.0.1:$PORT/api/health" 2>/dev/null); then
+              echo "$body"
+              echo "$body" | grep -q '"ok":true' || { echo "health did not report ok"; exit 1; }
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "=== server.log ==="
+          cat server.log
+          echo "=== server never answered ==="
+          exit 1
